@@ -131,11 +131,6 @@ private struct ShortcutsStep: View {
                 )
                 .disabled(isInstalling)
 
-                Button("Skip for now") { onNext() }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 13))
-                    .foregroundStyle(.white.opacity(0.3))
-                    .padding(.top, 16)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

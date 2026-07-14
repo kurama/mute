@@ -1,12 +1,12 @@
+<div align="center">
+
 # Mute
 
 A macOS menu bar app that automatically activates Do Not Disturb when your microphone or camera is in use.
 
-<table><tr>
-  <td><img src="screenshot.png" alt="Mute onboarding — welcome" /></td>
-  <td><img src="screenshot2.png" alt="Mute onboarding — shortcuts" /></td>
-  <td><img src="screenshot3.png" alt="Mute onboarding — finish" /></td>
-</tr></table>
+![Demo](demo.gif)
+
+</div>
 
 No configuration required. Works with Zoom, Teams, Meet, FaceTime, and any other app that accesses your mic or camera.
 
