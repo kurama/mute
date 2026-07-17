@@ -18,8 +18,6 @@ final class StatusBarController {
         rebuildMenu(isActive: isActive)
     }
 
-    // MARK: - Icon
-
     private func setIcon(isActive: Bool) {
         guard let button = barItem.button else { return }
         guard let url = Bundle.main.url(forResource: "StatusBarIcon", withExtension: "svg"),
@@ -35,8 +33,6 @@ final class StatusBarController {
         }
         button.contentTintColor = nil
     }
-
-    // MARK: - Menu
 
     private func rebuildMenu(isActive: Bool) {
         let menu = NSMenu()
@@ -74,7 +70,7 @@ final class StatusBarController {
         for (title, mode) in modes {
             let item = NSMenuItem(title: title, action: #selector(setTriggerMode(_:)), keyEquivalent: "")
             item.target = self
-            item.tag = tagFor(mode)
+            item.representedObject = mode
             item.state = mediaMonitor.triggerMode == mode ? .on : .off
             triggerSubmenu.addItem(item)
         }
@@ -95,8 +91,6 @@ final class StatusBarController {
         barItem.menu = menu
     }
 
-    // MARK: - Actions
-
     @objc private func toggleMonitoring() {
         mediaMonitor.isMonitoringEnabled.toggle()
         if !mediaMonitor.isMonitoringEnabled {
@@ -107,22 +101,9 @@ final class StatusBarController {
     }
 
     @objc private func setTriggerMode(_ sender: NSMenuItem) {
-        let mode: TriggerMode
-        switch sender.tag {
-        case 1:  mode = .micOnly
-        case 2:  mode = .cameraOnly
-        default: mode = .micAndCamera
-        }
+        guard let mode = sender.representedObject as? TriggerMode else { return }
         mediaMonitor.triggerMode = mode
         rebuildMenu(isActive: mediaMonitor.isActive)
-    }
-
-    private func tagFor(_ mode: TriggerMode) -> Int {
-        switch mode {
-        case .micAndCamera: return 0
-        case .micOnly:      return 1
-        case .cameraOnly:   return 2
-        }
     }
 
     #if DEBUG

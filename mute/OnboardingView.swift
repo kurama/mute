@@ -52,8 +52,6 @@ struct OnboardingView: View {
     }
 }
 
-// MARK: - Welcome
-
 private struct WelcomeStep: View {
     var onNext: () -> Void
 
@@ -88,8 +86,6 @@ private struct WelcomeStep: View {
         .padding(.horizontal, 60)
     }
 }
-
-// MARK: - Shortcuts
 
 private struct ShortcutsStep: View {
     var onNext: () -> Void
@@ -189,8 +185,6 @@ private struct ShortcutBadge: View {
     }
 }
 
-// MARK: - Finish
-
 private struct FinishStep: View {
     var onComplete: () -> Void
     @State private var launchAtLogin = true
@@ -239,8 +233,6 @@ private struct FinishStep: View {
         .padding(.horizontal, 60)
     }
 }
-
-// MARK: - Shared button
 
 private struct OnboardingButton: View {
     let title: String

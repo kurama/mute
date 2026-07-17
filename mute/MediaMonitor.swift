@@ -33,8 +33,6 @@ final class MediaMonitor {
     private var deviceConnectObserver: NSObjectProtocol?
     private var pollTimer: Timer?
 
-    // MARK: - Lifecycle
-
     func start() {
         attachMicListener()
         attachCameraObserver()
@@ -57,8 +55,6 @@ final class MediaMonitor {
             NotificationCenter.default.removeObserver(obs)
         }
     }
-
-    // MARK: - Microphone (CoreAudio)
 
     // kAudioDevicePropertyDeviceIsRunningSomewhere is the same signal that drives
     // the orange mic indicator in the macOS menu bar — reliable across all apps.
@@ -99,8 +95,6 @@ final class MediaMonitor {
         setMicActive(isRunning != 0)
     }
 
-    // MARK: - Camera (AVCaptureDevice)
-
     private func attachCameraObserver() {
         cameraObservation = nil
         let cameras = AVCaptureDevice.DiscoverySession(
@@ -123,15 +117,11 @@ final class MediaMonitor {
         setCameraActive(active)
     }
 
-    // MARK: - Polling fallback
-
     private func poll() {
         guard isMonitoringEnabled else { return }
         refreshMicState()
         refreshCameraState()
     }
-
-    // MARK: - State
 
     private func setCameraActive(_ active: Bool) {
         isCameraActive = active

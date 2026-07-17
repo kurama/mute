@@ -9,8 +9,6 @@ final class FocusController {
     private static let queue = DispatchQueue(label: "kurama.mute.focus", qos: .userInitiated)
     private static let installedDefaultsKey = "shortcutsInstalled"
 
-    // MARK: - Setup
-
     func setup() {
         guard !UserDefaults.standard.bool(forKey: Self.installedDefaultsKey) else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
@@ -30,8 +28,6 @@ final class FocusController {
         UserDefaults.standard.set(true, forKey: installedDefaultsKey)
     }
 
-    // MARK: - Public
-
     func handleMediaState(isActive: Bool) {
         if isActive {
             guard !enabledByUs else { return }
@@ -50,13 +46,8 @@ final class FocusController {
         run("Mute Off")
     }
 
-    func restoreState() {
-        guard enabledByUs else { return }
-        enabledByUs = false
-        run("Mute Off")
-    }
+    func restoreState() { disable() }
 
-    // MARK: - Run
 
     private func run(_ shortcut: String) {
         Self.queue.async {
