@@ -187,7 +187,7 @@ private struct ShortcutBadge: View {
 
 private struct FinishStep: View {
     var onComplete: () -> Void
-    @State private var launchAtLogin = true
+    @State private var launchAtLogin = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
