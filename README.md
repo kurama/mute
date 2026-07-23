@@ -4,7 +4,7 @@
 
 A macOS menu bar app that automatically activates Do Not Disturb when your microphone or camera is in use.
 
-![Demo](demo.gif)
+![Screenshot](screenshot.jpg)
 
 </div>
 
