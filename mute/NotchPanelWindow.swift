@@ -4,7 +4,10 @@ import SwiftUI
 final class NotchPanelWindow: NSPanel {
     private var outsideClickMonitor: Any?
 
-    init(viewModel: NotchPanelViewModel, onToggle: @escaping () -> Void, onSnooze: @escaping (TimeInterval) -> Void) {
+    init(viewModel: NotchPanelViewModel, onToggle: @escaping () -> Void, onSnooze: @escaping (TimeInterval) -> Void, onTriggerModeChange: @escaping (TriggerMode) -> Void, onLaunchAtLoginChange: @escaping (Bool) -> Void) {
+        let notchH = NSScreen.main?.safeAreaInsets.top ?? 0
+        let totalH: CGFloat = 88 + (notchH > 0 ? notchH : 0)
+
         super.init(
             contentRect: .zero,
             styleMask: [.borderless, .nonactivatingPanel],
@@ -13,20 +16,23 @@ final class NotchPanelWindow: NSPanel {
         )
         isOpaque = false
         backgroundColor = .clear
-        hasShadow = true
+        hasShadow = false
         level = .statusBar
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         isMovable = false
 
         let view = NotchPanelView(
             viewModel: viewModel,
+            notchHeight: notchH,
             onToggle: { [weak self] in onToggle(); self?.hide() },
-            onSnooze: { [weak self] duration in onSnooze(duration); self?.hide() }
+            onSnooze: { duration in onSnooze(duration) },
+            onTriggerModeChange: onTriggerModeChange,
+            onLaunchAtLoginChange: onLaunchAtLoginChange
         )
         .environment(\.colorScheme, .dark)
 
         let host = NSHostingView(rootView: view)
-        host.frame = NSRect(x: 0, y: 0, width: 440, height: 88)
+        host.frame = NSRect(x: 0, y: 0, width: 600, height: totalH)
         contentView = host
     }
 
@@ -58,12 +64,13 @@ final class NotchPanelWindow: NSPanel {
     }
 
     private func position(on screen: NSScreen) {
-        let w: CGFloat = 440, h: CGFloat = 88
+        let w: CGFloat = 600
         let notchH = screen.safeAreaInsets.top
+        let h: CGFloat = 88 + (notchH > 0 ? notchH : 0)
         let x = screen.frame.midX - w / 2
         let y = notchH > 0
-            ? screen.frame.maxY - notchH - h - 4
-            : screen.visibleFrame.maxY - h - 4
+            ? screen.frame.maxY - h      // top edge flush with top of screen, merges into notch
+            : screen.visibleFrame.maxY - h
         setFrame(NSRect(x: x, y: y, width: w, height: h), display: false)
     }
 }

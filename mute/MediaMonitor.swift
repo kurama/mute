@@ -21,11 +21,13 @@ final class MediaMonitor {
     }
 
     private(set) var isSnoozed = false
+    private(set) var snoozeEndsAt: Date?
     private var snoozeTimer: Timer?
 
     func snooze(for duration: TimeInterval = 1800) {
         snoozeTimer?.invalidate()
         isSnoozed = true
+        snoozeEndsAt = Date().addingTimeInterval(duration)
         if !isActive {
             isActive = true
             onStateChange?(true)
@@ -40,6 +42,7 @@ final class MediaMonitor {
         snoozeTimer?.invalidate()
         snoozeTimer = nil
         isSnoozed = false
+        snoozeEndsAt = nil
         refreshState()
         onMonitoringChange?()
     }
@@ -50,6 +53,7 @@ final class MediaMonitor {
         didSet {
             UserDefaults.standard.set(triggerMode.rawValue, forKey: "triggerMode")
             refreshState()
+            onMonitoringChange?()
         }
     }
 

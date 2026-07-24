@@ -8,7 +8,9 @@ final class NotchPanelViewModel {
     var isActive = false
     var isMonitoringEnabled = true
     var isSnoozed = false
+    var triggerMode: TriggerMode = .micAndCamera
     private(set) var activeSince: Date?
+    private(set) var snoozeEndsAt: Date?
 
     func update(from monitor: MediaMonitor) {
         if monitor.isActive && !isActive { activeSince = Date() }
@@ -18,11 +20,27 @@ final class NotchPanelViewModel {
         isActive = monitor.isActive
         isMonitoringEnabled = monitor.isMonitoringEnabled
         isSnoozed = monitor.isSnoozed
+        snoozeEndsAt = monitor.snoozeEndsAt
+        triggerMode = monitor.triggerMode
+    }
+
+    var snoozeRemaining: String {
+        guard let end = snoozeEndsAt else { return "" }
+        let remaining = max(0, Int(end.timeIntervalSinceNow))
+        let h = remaining / 3600
+        let m = (remaining % 3600) / 60
+        let s = remaining % 60
+        if h > 0 { return String(format: "%d:%02d:%02d", h, m, s) }
+        return String(format: "%d:%02d", m, s)
     }
 
     var dndDuration: String {
         guard let since = activeSince else { return "" }
-        let minutes = Int(Date().timeIntervalSince(since) / 60)
-        return minutes < 1 ? "< 1 min" : "\(minutes) min"
+        let elapsed = Int(Date().timeIntervalSince(since))
+        let h = elapsed / 3600
+        let m = (elapsed % 3600) / 60
+        let s = elapsed % 60
+        if h > 0 { return String(format: "%d:%02d:%02d", h, m, s) }
+        return String(format: "%d:%02d", m, s)
     }
 }
