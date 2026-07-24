@@ -1,5 +1,6 @@
 import AVFoundation
 import CoreAudio
+import CoreMediaIO
 
 enum TriggerMode: String {
     case micAndCamera = "both"
@@ -10,9 +11,37 @@ enum TriggerMode: String {
 final class MediaMonitor {
 
     var onStateChange: ((Bool) -> Void)?
+    var onMonitoringChange: (() -> Void)?
 
     var isMonitoringEnabled = true {
-        didSet { if !isMonitoringEnabled { forceIdle() } }
+        didSet {
+            if !isMonitoringEnabled { forceIdle() }
+            onMonitoringChange?()
+        }
+    }
+
+    private(set) var isSnoozed = false
+    private var snoozeTimer: Timer?
+
+    func snooze(for duration: TimeInterval = 1800) {
+        snoozeTimer?.invalidate()
+        isSnoozed = true
+        if !isActive {
+            isActive = true
+            onStateChange?(true)
+        }
+        snoozeTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
+            self?.cancelSnooze()
+        }
+        onMonitoringChange?()
+    }
+
+    func cancelSnooze() {
+        snoozeTimer?.invalidate()
+        snoozeTimer = nil
+        isSnoozed = false
+        refreshState()
+        onMonitoringChange?()
     }
 
     var triggerMode: TriggerMode = {
@@ -29,13 +58,12 @@ final class MediaMonitor {
     private(set) var isCameraActive = false
 
     private var micDeviceID: AudioDeviceID = kAudioObjectUnknown
-    private var cameraObservation: NSKeyValueObservation?
     private var deviceConnectObserver: NSObjectProtocol?
     private var pollTimer: Timer?
 
     func start() {
         attachMicListener()
-        attachCameraObserver()
+        requestCameraAccessThenListen()
 
         pollTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             self?.poll()
@@ -43,14 +71,26 @@ final class MediaMonitor {
         poll()
 
         deviceConnectObserver = NotificationCenter.default.addObserver(
-            forName: .AVCaptureDeviceWasConnected, object: nil, queue: .main
-        ) { [weak self] _ in self?.attachCameraObserver() }
+            forName: AVCaptureDevice.wasConnectedNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.attachCameraListener() }
+    }
+
+    private func requestCameraAccessThenListen() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            attachCameraListener()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                if granted { DispatchQueue.main.async { self?.attachCameraListener() } }
+            }
+        default:
+            break
+        }
     }
 
     func stop() {
         pollTimer?.invalidate()
         pollTimer = nil
-        cameraObservation = nil
         if let obs = deviceConnectObserver {
             NotificationCenter.default.removeObserver(obs)
         }
@@ -95,25 +135,55 @@ final class MediaMonitor {
         setMicActive(isRunning != 0)
     }
 
-    private func attachCameraObserver() {
-        cameraObservation = nil
-        let cameras = AVCaptureDevice.DiscoverySession(
-            deviceTypes: [.builtInWideAngleCamera, .continuityCamera, .external],
-            mediaType: .video,
-            position: .unspecified
-        ).devices
-        guard let camera = cameras.first else { return }
-        cameraObservation = camera.observe(\.isInUseByAnotherApplication, options: [.new, .initial]) { [weak self] _, _ in
-            DispatchQueue.main.async { self?.refreshCameraState() }
+    // CoreMediaIO mirrors CoreAudio but for video — no camera permission needed,
+    // kCMIODevicePropertyDeviceIsRunningSomewhere is the camera equivalent of the mic property above.
+    private func attachCameraListener() {
+        guard let ids = cmioCameraIDs(), !ids.isEmpty else { return }
+        for deviceID in ids {
+            var addr = CMIOObjectPropertyAddress(
+                mSelector: CMIOObjectPropertySelector(kCMIODevicePropertyDeviceIsRunningSomewhere),
+                mScope: CMIOObjectPropertyScope(kCMIOObjectPropertyScopeGlobal),
+                mElement: CMIOObjectPropertyElement(kCMIOObjectPropertyElementMain)
+            )
+            CMIOObjectAddPropertyListenerBlock(deviceID, &addr, DispatchQueue.main) { [weak self] _, _ in
+                MainActor.assumeIsolated { self?.refreshCameraState() }
+            }
         }
+        refreshCameraState()
+    }
+
+    private func cmioCameraIDs() -> [CMIODeviceID]? {
+        var address = CMIOObjectPropertyAddress(
+            mSelector: CMIOObjectPropertySelector(kCMIOHardwarePropertyDevices),
+            mScope: CMIOObjectPropertyScope(kCMIOObjectPropertyScopeGlobal),
+            mElement: CMIOObjectPropertyElement(kCMIOObjectPropertyElementMain)
+        )
+        var dataSize: UInt32 = 0
+        guard CMIOObjectGetPropertyDataSize(
+            CMIOObjectID(kCMIOObjectSystemObject), &address, 0, nil, &dataSize
+        ) == noErr, dataSize > 0 else { return nil }
+
+        let count = Int(dataSize) / MemoryLayout<CMIODeviceID>.size
+        var ids = [CMIODeviceID](repeating: CMIODeviceID(kCMIOObjectUnknown), count: count)
+        var outSize = dataSize
+        guard CMIOObjectGetPropertyData(
+            CMIOObjectID(kCMIOObjectSystemObject), &address, 0, nil, dataSize, &outSize, &ids
+        ) == noErr else { return nil }
+        return ids
     }
 
     private func refreshCameraState() {
-        let active = AVCaptureDevice.DiscoverySession(
-            deviceTypes: [.builtInWideAngleCamera, .continuityCamera, .external],
-            mediaType: .video,
-            position: .unspecified
-        ).devices.contains { $0.isInUseByAnotherApplication }
+        guard let ids = cmioCameraIDs() else { setCameraActive(false); return }
+        let active = ids.contains { deviceID in
+            var addr = CMIOObjectPropertyAddress(
+                mSelector: CMIOObjectPropertySelector(kCMIODevicePropertyDeviceIsRunningSomewhere),
+                mScope: CMIOObjectPropertyScope(kCMIOObjectPropertyScopeGlobal),
+                mElement: CMIOObjectPropertyElement(kCMIOObjectPropertyElementMain)
+            )
+            var isRunning: UInt32 = 0
+            var size = UInt32(MemoryLayout<UInt32>.size)
+            return CMIOObjectGetPropertyData(deviceID, &addr, 0, nil, size, &size, &isRunning) == noErr && isRunning != 0
+        }
         setCameraActive(active)
     }
 
@@ -124,16 +194,21 @@ final class MediaMonitor {
     }
 
     private func setCameraActive(_ active: Bool) {
+        guard isCameraActive != active else { return }
         isCameraActive = active
         refreshState()
+        onMonitoringChange?()
     }
 
     private func setMicActive(_ active: Bool) {
+        guard isMicActive != active else { return }
         isMicActive = active
         refreshState()
+        onMonitoringChange?()
     }
 
     private func refreshState() {
+        guard !isSnoozed else { return }
         let triggered: Bool
         switch triggerMode {
         case .micAndCamera: triggered = isMicActive || isCameraActive
@@ -147,6 +222,11 @@ final class MediaMonitor {
     }
 
     private func forceIdle() {
+        if isSnoozed {
+            snoozeTimer?.invalidate()
+            snoozeTimer = nil
+            isSnoozed = false
+        }
         isMicActive = false
         isCameraActive = false
         guard isActive else { return }
