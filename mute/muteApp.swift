@@ -1,4 +1,5 @@
 import AppKit
+import ServiceManagement
 
 @main
 final class MuteApp: NSObject, NSApplicationDelegate {
@@ -46,7 +47,15 @@ final class MuteApp: NSObject, NSApplicationDelegate {
                     if !mm.isMonitoringEnabled { fc?.disable() }
                 }
             },
-            onSnooze: { [weak mm] duration in mm?.snooze(for: duration) }
+            onSnooze: { [weak mm] duration in mm?.snooze(for: duration) },
+            onTriggerModeChange: { [weak mm] mode in mm?.triggerMode = mode },
+            onLaunchAtLoginChange: { enabled in
+                if enabled {
+                    try? SMAppService.mainApp.register()
+                } else {
+                    try? SMAppService.mainApp.unregister()
+                }
+            }
         )
         let sb = StatusBarController(mediaMonitor: mm, focusController: fc, notchPanel: panel)
 

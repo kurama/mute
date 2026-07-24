@@ -28,7 +28,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
               let img = NSImage(contentsOf: url) else { return }
         let size = NSSize(width: 16, height: 16)
         if isActive {
-            button.image = img.filled(with: .systemGreen, size: size)
+            button.image = img.filled(with: NSColor(red: 42/255, green: 90/255, blue: 210/255, alpha: 1), size: size)
         } else {
             img.isTemplate = true
             img.size = size
@@ -38,15 +38,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     @objc private func handleClick(_ sender: NSStatusBarButton) {
-        guard let event = NSApp.currentEvent else { return }
-        if event.type == .rightMouseUp {
-            let menu = buildMenu()
-            menu.delegate = self
-            barItem.menu = menu
-            barItem.button?.performClick(nil)
-        } else {
-            notchPanel?.toggle()
-        }
+        let menu = buildMenu()
+        menu.delegate = self
+        barItem.menu = menu
+        barItem.button?.performClick(nil)
     }
 
     func menuDidClose(_ menu: NSMenu) {
@@ -55,51 +50,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
-        let isActive = mediaMonitor.isActive
 
-        let statusLine: String
-        if isActive {
-            var parts: [String] = []
-            if mediaMonitor.isMicActive { parts.append("mic") }
-            if mediaMonitor.isCameraActive { parts.append("camera") }
-            statusLine = "Active (\(parts.joined(separator: " + "))) — DND on"
-        } else if mediaMonitor.isSnoozed {
-            statusLine = "Snoozed"
-        } else {
-            statusLine = mediaMonitor.isMonitoringEnabled ? "Idle — monitoring" : "Disabled"
-        }
-
-        let statusItem = NSMenuItem(title: statusLine, action: nil, keyEquivalent: "")
-        statusItem.isEnabled = false
-        menu.addItem(statusItem)
-        menu.addItem(.separator())
-
-        let toggleTitle: String
-        if mediaMonitor.isSnoozed {
-            toggleTitle = "Cancel Snooze"
-        } else {
-            toggleTitle = mediaMonitor.isMonitoringEnabled ? "Disable Mute" : "Enable Mute"
-        }
-        let toggleItem = NSMenuItem(title: toggleTitle, action: #selector(toggleMonitoring), keyEquivalent: "")
-        toggleItem.target = self
-        menu.addItem(toggleItem)
-
-        let triggerItem = NSMenuItem(title: "Trigger on", action: nil, keyEquivalent: "")
-        let triggerSubmenu = NSMenu(title: "Trigger on")
-        let modes: [(title: String, mode: TriggerMode)] = [
-            ("Mic & Camera", .micAndCamera),
-            ("Mic only", .micOnly),
-            ("Camera only", .cameraOnly),
-        ]
-        for (title, mode) in modes {
-            let item = NSMenuItem(title: title, action: #selector(setTriggerMode(_:)), keyEquivalent: "")
-            item.target = self
-            item.representedObject = mode
-            item.state = mediaMonitor.triggerMode == mode ? .on : .off
-            triggerSubmenu.addItem(item)
-        }
-        triggerItem.submenu = triggerSubmenu
-        menu.addItem(triggerItem)
+        let showItem = NSMenuItem(title: "Show Panel", action: #selector(showPanel), keyEquivalent: "")
+        showItem.target = self
+        menu.addItem(showItem)
 
         menu.addItem(.separator())
 
@@ -114,19 +68,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         return menu
     }
 
-    @objc private func toggleMonitoring() {
-        if mediaMonitor.isSnoozed {
-            mediaMonitor.cancelSnooze()
-        } else {
-            mediaMonitor.isMonitoringEnabled.toggle()
-            if !mediaMonitor.isMonitoringEnabled { focusController.disable() }
-        }
-        setIcon(isActive: mediaMonitor.isActive)
-    }
-
-    @objc private func setTriggerMode(_ sender: NSMenuItem) {
-        guard let mode = sender.representedObject as? TriggerMode else { return }
-        mediaMonitor.triggerMode = mode
+    @objc private func showPanel() {
+        notchPanel?.show()
     }
 
     #if DEBUG
