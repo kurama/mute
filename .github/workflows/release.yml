@@ -1,0 +1,194 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  SCHEME: mute
+  PROJECT: mute.xcodeproj
+  BUNDLE_ID: kurama.mute
+  TEAM_ID: LHJ9S8C3G8
+
+jobs:
+  # ── App Store ──────────────────────────────────────────────────────────────
+  appstore:
+    name: App Store
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import App Store certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.APPSTORE_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPSTORE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          PROVISIONING_PROFILE: ${{ secrets.APPSTORE_PROVISIONING_PROFILE }}
+        run: |
+          # Temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          # Import distribution certificate
+          echo "$CERTIFICATE_P12" | base64 --decode > certificate.p12
+          security import certificate.p12 \
+            -k build.keychain \
+            -P "$CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple: -s \
+            -k "$KEYCHAIN_PASSWORD" build.keychain
+          rm certificate.p12
+
+          # Install provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$PROVISIONING_PROFILE" | base64 --decode \
+            > ~/Library/MobileDevice/Provisioning\ Profiles/mute_appstore.provisionprofile
+
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath build/mute.xcarchive \
+            -destination "generic/platform=macOS" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            DEVELOPMENT_TEAM="$TEAM_ID"
+
+      - name: Export
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/mute.xcarchive \
+            -exportPath build/appstore \
+            -exportOptionsPlist ExportOptions-AppStore.plist
+
+      - name: Upload to App Store Connect
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+        run: |
+          xcrun altool --upload-app \
+            --type macos \
+            --file "build/appstore/mute.pkg" \
+            --username "$APPLE_ID" \
+            --password "$APP_SPECIFIC_PASSWORD" \
+            --team-id "$TEAM_ID"
+
+  # ── Homebrew (Developer ID) ────────────────────────────────────────────────
+  homebrew:
+    name: Homebrew
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import Developer ID certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.DEVID_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.DEVID_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          echo "$CERTIFICATE_P12" | base64 --decode > certificate.p12
+          security import certificate.p12 \
+            -k build.keychain \
+            -P "$CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple: -s \
+            -k "$KEYCHAIN_PASSWORD" build.keychain
+          rm certificate.p12
+
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath build/mute-devid.xcarchive \
+            -destination "generic/platform=macOS" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application: Dorian Grasset ($TEAM_ID)" \
+            DEVELOPMENT_TEAM="$TEAM_ID"
+
+      - name: Export
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/mute-devid.xcarchive \
+            -exportPath build/devid \
+            -exportOptionsPlist ExportOptions-DeveloperID.plist
+
+      - name: Notarize
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/devid/Mute.app \
+            build/Mute.zip
+
+          xcrun notarytool submit build/Mute.zip \
+            --apple-id "$APPLE_ID" \
+            --password "$APP_SPECIFIC_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+
+          xcrun stapler staple build/devid/Mute.app
+
+      - name: Create DMG
+        run: |
+          hdiutil create \
+            -volname Mute \
+            -srcfolder build/devid/Mute.app \
+            -ov -format UDZO \
+            build/Mute.dmg
+          xcrun stapler staple build/Mute.dmg
+
+      - name: Create GitHub release and upload DMG
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          gh release create "$VERSION" build/Mute.dmg \
+            --title "Mute $VERSION" \
+            --generate-notes
+
+      - name: Update Homebrew tap
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHA256=$(shasum -a 256 build/Mute.dmg | awk '{print $1}')
+
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/kurama/homebrew-tap.git"
+          mkdir -p homebrew-tap/Casks
+
+          cat > homebrew-tap/Casks/mute.rb << EOF
+          cask "mute" do
+            version "${VERSION}"
+            sha256 "${SHA256}"
+
+            url "https://github.com/kurama/mute/releases/download/v#{version}/Mute.dmg"
+
+            name "Mute"
+            desc "Automatically enables Do Not Disturb when your mic or camera is active"
+            homepage "https://github.com/kurama/mute"
+
+            app "Mute.app"
+          end
+          EOF
+
+          cd homebrew-tap
+          git config user.email "action@github.com"
+          git config user.name "GitHub Actions"
+          git add Casks/mute.rb
+          git commit -m "chore: update mute to ${VERSION}"
+          git push
