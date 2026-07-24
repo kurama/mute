@@ -1,0 +1,45 @@
+name: 🐛 Bug Report
+description: Report a bug to help us improve Mute
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+  - type: textarea
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of the bug
+      placeholder: "What happened?"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: To Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Launch Mute
+        2. Start a call
+        3. ...
+
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: A clear description of what you expected to happen
+
+  - type: input
+    attributes:
+      label: Version
+      description: What version of Mute are you using?
+      placeholder: "v1.0.0"
+
+  - type: textarea
+    attributes:
+      label: Environment
+      value: |
+        - macOS:
+        - Mac:
+    validations:
+      required: true

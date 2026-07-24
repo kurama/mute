@@ -3,7 +3,7 @@
 ## Setup
 
 ```bash
-git clone https://github.com/doriangrasset/mute.git
+git clone https://github.com/kurama/mute.git
 cd mute
 open mute.xcodeproj
 ```

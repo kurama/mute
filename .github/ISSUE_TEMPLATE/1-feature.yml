@@ -1,0 +1,35 @@
+name: 💡 Feature Request
+description: Suggest an idea for this project
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement to Mute!
+
+  - type: textarea
+    attributes:
+      label: Is your feature request related to a problem?
+      description: A clear and concise description of the problem
+      placeholder: "I'm always frustrated when [...]"
+
+  - type: textarea
+    attributes:
+      label: Desired Solution
+      description: A clear and concise description of what you want to happen
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Considered Alternatives
+      description: Any alternative solutions or features you've considered
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Additional Context
+      description: Any other context or screenshots about the feature request
+    validations:
+      required: false
