@@ -1,28 +1,31 @@
 import AppKit
 
-final class StatusBarController {
+final class StatusBarController: NSObject, NSMenuDelegate {
     private let barItem: NSStatusItem
     private let mediaMonitor: MediaMonitor
     private let focusController: FocusController
+    private weak var notchPanel: NotchPanelWindow?
 
-    init(mediaMonitor: MediaMonitor, focusController: FocusController) {
+    init(mediaMonitor: MediaMonitor, focusController: FocusController, notchPanel: NotchPanelWindow) {
         self.mediaMonitor = mediaMonitor
         self.focusController = focusController
+        self.notchPanel = notchPanel
         barItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        super.init()
         setIcon(isActive: false)
-        rebuildMenu(isActive: false)
+        barItem.button?.action = #selector(handleClick(_:))
+        barItem.button?.target = self
+        barItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
     }
 
     func updateState(isActive: Bool) {
         setIcon(isActive: isActive)
-        rebuildMenu(isActive: isActive)
     }
 
     private func setIcon(isActive: Bool) {
         guard let button = barItem.button else { return }
         guard let url = Bundle.main.url(forResource: "StatusBarIcon", withExtension: "svg"),
               let img = NSImage(contentsOf: url) else { return }
-
         let size = NSSize(width: 16, height: 16)
         if isActive {
             button.image = img.filled(with: .systemGreen, size: size)
@@ -34,8 +37,25 @@ final class StatusBarController {
         button.contentTintColor = nil
     }
 
-    private func rebuildMenu(isActive: Bool) {
+    @objc private func handleClick(_ sender: NSStatusBarButton) {
+        guard let event = NSApp.currentEvent else { return }
+        if event.type == .rightMouseUp {
+            let menu = buildMenu()
+            menu.delegate = self
+            barItem.menu = menu
+            barItem.button?.performClick(nil)
+        } else {
+            notchPanel?.toggle()
+        }
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        barItem.menu = nil
+    }
+
+    private func buildMenu() -> NSMenu {
         let menu = NSMenu()
+        let isActive = mediaMonitor.isActive
 
         let statusLine: String
         if isActive {
@@ -43,6 +63,8 @@ final class StatusBarController {
             if mediaMonitor.isMicActive { parts.append("mic") }
             if mediaMonitor.isCameraActive { parts.append("camera") }
             statusLine = "Active (\(parts.joined(separator: " + "))) — DND on"
+        } else if mediaMonitor.isSnoozed {
+            statusLine = "Snoozed"
         } else {
             statusLine = mediaMonitor.isMonitoringEnabled ? "Idle — monitoring" : "Disabled"
         }
@@ -50,18 +72,20 @@ final class StatusBarController {
         let statusItem = NSMenuItem(title: statusLine, action: nil, keyEquivalent: "")
         statusItem.isEnabled = false
         menu.addItem(statusItem)
-
         menu.addItem(.separator())
 
-        let toggleTitle = mediaMonitor.isMonitoringEnabled ? "Disable Mute" : "Enable Mute"
+        let toggleTitle: String
+        if mediaMonitor.isSnoozed {
+            toggleTitle = "Cancel Snooze"
+        } else {
+            toggleTitle = mediaMonitor.isMonitoringEnabled ? "Disable Mute" : "Enable Mute"
+        }
         let toggleItem = NSMenuItem(title: toggleTitle, action: #selector(toggleMonitoring), keyEquivalent: "")
         toggleItem.target = self
         menu.addItem(toggleItem)
 
-        // Trigger mode submenu
         let triggerItem = NSMenuItem(title: "Trigger on", action: nil, keyEquivalent: "")
         let triggerSubmenu = NSMenu(title: "Trigger on")
-
         let modes: [(title: String, mode: TriggerMode)] = [
             ("Mic & Camera", .micAndCamera),
             ("Mic only", .micOnly),
@@ -87,23 +111,22 @@ final class StatusBarController {
         #endif
 
         menu.addItem(NSMenuItem(title: "Quit Mute", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
-
-        barItem.menu = menu
+        return menu
     }
 
     @objc private func toggleMonitoring() {
-        mediaMonitor.isMonitoringEnabled.toggle()
-        if !mediaMonitor.isMonitoringEnabled {
-            focusController.disable()
+        if mediaMonitor.isSnoozed {
+            mediaMonitor.cancelSnooze()
+        } else {
+            mediaMonitor.isMonitoringEnabled.toggle()
+            if !mediaMonitor.isMonitoringEnabled { focusController.disable() }
         }
         setIcon(isActive: mediaMonitor.isActive)
-        rebuildMenu(isActive: mediaMonitor.isActive)
     }
 
     @objc private func setTriggerMode(_ sender: NSMenuItem) {
         guard let mode = sender.representedObject as? TriggerMode else { return }
         mediaMonitor.triggerMode = mode
-        rebuildMenu(isActive: mediaMonitor.isActive)
     }
 
     #if DEBUG

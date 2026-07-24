@@ -6,6 +6,8 @@ final class MuteApp: NSObject, NSApplicationDelegate {
     private var mediaMonitor: MediaMonitor?
     private var focusController: FocusController?
     private var onboardingController: OnboardingWindowController?
+    private var notchPanel: NotchPanelWindow?
+    private var notchPanelVM: NotchPanelViewModel?
 
     static func main() {
         let app = NSApplication.shared
@@ -32,16 +34,37 @@ final class MuteApp: NSObject, NSApplicationDelegate {
 
         let fc = FocusController()
         let mm = MediaMonitor()
-        let sb = StatusBarController(mediaMonitor: mm, focusController: fc)
+        let vm = NotchPanelViewModel()
+        let panel = NotchPanelWindow(
+            viewModel: vm,
+            onToggle: { [weak mm, weak fc] in
+                guard let mm else { return }
+                if mm.isSnoozed {
+                    mm.cancelSnooze()
+                } else {
+                    mm.isMonitoringEnabled.toggle()
+                    if !mm.isMonitoringEnabled { fc?.disable() }
+                }
+            },
+            onSnooze: { [weak mm] duration in mm?.snooze(for: duration) }
+        )
+        let sb = StatusBarController(mediaMonitor: mm, focusController: fc, notchPanel: panel)
 
         focusController = fc
         mediaMonitor = mm
         statusBarController = sb
+        notchPanel = panel
+        notchPanelVM = vm
 
         fc.setup()
-        mm.onStateChange = { [weak fc, weak sb] isActive in
+
+        mm.onStateChange = { [weak fc, weak sb, weak mm, weak vm] isActive in
             fc?.handleMediaState(isActive: isActive)
             sb?.updateState(isActive: isActive)
+            if let mm, let vm { vm.update(from: mm) }
+        }
+        mm.onMonitoringChange = { [weak mm, weak vm] in
+            if let mm, let vm { vm.update(from: mm) }
         }
 
         mm.start()
