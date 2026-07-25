@@ -130,7 +130,8 @@ jobs:
             -destination "generic/platform=macOS" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Developer ID Application: Dorian Grasset ($TEAM_ID)" \
-            DEVELOPMENT_TEAM="$TEAM_ID"
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            ENABLE_HARDENED_RUNTIME=YES
 
       - name: Export
         run: |
@@ -148,11 +149,24 @@ jobs:
             build/devid/Mute.app \
             build/Mute.zip
 
-          xcrun notarytool submit build/Mute.zip \
+          SUBMISSION=$(xcrun notarytool submit build/Mute.zip \
             --apple-id "$APPLE_ID" \
             --password "$APP_SPECIFIC_PASSWORD" \
             --team-id "$TEAM_ID" \
-            --wait
+            --output-format json --wait)
+          echo "$SUBMISSION"
+
+          ID=$(echo "$SUBMISSION" | jq -r '.id')
+          STATUS=$(echo "$SUBMISSION" | jq -r '.status')
+
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "::error::Notarization failed with status: $STATUS. Apple log below:"
+            xcrun notarytool log "$ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APP_SPECIFIC_PASSWORD" \
+              --team-id "$TEAM_ID"
+            exit 1
+          fi
 
           xcrun stapler staple build/devid/Mute.app
 
