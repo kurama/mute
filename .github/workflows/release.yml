@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Existing tag to release (e.g. v1.0.0)'
+        required: true
+        type: string
+      include_appstore:
+        description: 'Also upload to the App Store'
+        type: boolean
+        default: false
 
 env:
   SCHEME: mute
@@ -16,6 +26,7 @@ jobs:
   appstore:
     name: App Store
     runs-on: macos-latest
+    if: github.event_name == 'push' || inputs.include_appstore
     steps:
       - uses: actions/checkout@v4
 
@@ -85,6 +96,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version || github.ref }}
 
       - name: Import Developer ID certificate
         env:
@@ -156,7 +169,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${GITHUB_REF_NAME}"
+          VERSION="${{ inputs.version || github.ref_name }}"
           gh release create "$VERSION" build/Mute.dmg \
             --title "Mute $VERSION" \
             --generate-notes
@@ -165,7 +178,8 @@ jobs:
         env:
           TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          RAW="${{ inputs.version || github.ref_name }}"
+          VERSION="${RAW#v}"
           SHA256=$(shasum -a 256 build/Mute.dmg | awk '{print $1}')
 
           git clone "https://x-access-token:${TAP_TOKEN}@github.com/kurama/homebrew-tap.git"
