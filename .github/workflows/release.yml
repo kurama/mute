@@ -144,9 +144,12 @@ jobs:
 
       - name: Create DMG
         run: |
+          mkdir -p build/dmg
+          cp -R build/devid/Mute.app build/dmg/Mute.app
+          ln -s /Applications build/dmg/Applications
           hdiutil create \
             -volname Mute \
-            -srcfolder build/devid/Mute.app \
+            -srcfolder build/dmg \
             -ov -format UDZO \
             build/Mute.dmg
 
