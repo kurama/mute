@@ -182,7 +182,7 @@ jobs:
         run: |
           VERSION="${{ inputs.version || github.ref_name }}"
           gh release create "$VERSION" build/Mute.dmg \
-            --title "Mute $VERSION" \
+            --title "$VERSION" \
             --generate-notes
 
       - name: Update Homebrew tap
