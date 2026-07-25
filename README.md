@@ -12,7 +12,23 @@ No configuration required. Works with Zoom, Teams, Meet, FaceTime, and any other
 
 ## Install
 
-Available on the Mac App Store — requires macOS 26 or later.
+Requires macOS 26 or later.
+
+### Mac App Store
+
+[**Download on the Mac App Store**](https://apps.apple.com/us/app/mute-silence-automated/id6790570476)
+
+> Not available in the EU due to App Store trader-status requirements. EU users, install via Homebrew or the direct download below.
+
+### Homebrew
+
+```bash
+brew install --cask kurama/tap/mute
+```
+
+### Direct download
+
+Download the latest notarized `.dmg` from the [Releases page](https://github.com/kurama/mute/releases).
 
 ## Build from source
 
