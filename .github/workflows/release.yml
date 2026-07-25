@@ -140,16 +140,20 @@ jobs:
             -exportPath build/devid \
             -exportOptionsPlist ExportOptions-DeveloperID.plist
 
-      - name: Notarize
+      - name: Create DMG
+        run: |
+          hdiutil create \
+            -volname Mute \
+            -srcfolder build/devid/Mute.app \
+            -ov -format UDZO \
+            build/Mute.dmg
+
+      - name: Notarize and staple DMG
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
         run: |
-          ditto -c -k --sequesterRsrc --keepParent \
-            build/devid/Mute.app \
-            build/Mute.zip
-
-          SUBMISSION=$(xcrun notarytool submit build/Mute.zip \
+          SUBMISSION=$(xcrun notarytool submit build/Mute.dmg \
             --apple-id "$APPLE_ID" \
             --password "$APP_SPECIFIC_PASSWORD" \
             --team-id "$TEAM_ID" \
@@ -168,15 +172,6 @@ jobs:
             exit 1
           fi
 
-          xcrun stapler staple build/devid/Mute.app
-
-      - name: Create DMG
-        run: |
-          hdiutil create \
-            -volname Mute \
-            -srcfolder build/devid/Mute.app \
-            -ov -format UDZO \
-            build/Mute.dmg
           xcrun stapler staple build/Mute.dmg
 
       - name: Create GitHub release and upload DMG
