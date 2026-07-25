@@ -7,11 +7,11 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Tag existant à publier (ex. v1.0.0)'
+        description: 'Existing tag to release (e.g. v1.0.0)'
         required: true
         type: string
       include_appstore:
-        description: 'Uploader aussi sur App Store'
+        description: 'Also upload to the App Store'
         type: boolean
         default: false
 
