@@ -85,8 +85,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     #if DEBUG
     @objc private func resetOnboarding() {
-        UserDefaults.standard.removeObject(forKey: "onboardingCompleted")
-        UserDefaults.standard.removeObject(forKey: "shortcutsInstalled")
+        UserDefaults.standard.removeObject(forKey: DefaultsKey.onboardingCompleted)
+        UserDefaults.standard.removeObject(forKey: DefaultsKey.shortcutsInstalled)
     }
     #endif
 }

@@ -47,7 +47,7 @@ final class NotchPanelWindow: NSPanel {
             $0.timingFunction = CAMediaTimingFunction(name: .easeOut)
             animator().alphaValue = 1
         }
-        if UserDefaults.standard.bool(forKey: "panelDismissOnOutsideClick") {
+        if UserDefaults.standard.bool(forKey: DefaultsKey.panelDismissOnOutsideClick) {
             outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(
                 matching: [.leftMouseDown, .rightMouseDown]
             ) { [weak self] _ in self?.hide() }

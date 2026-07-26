@@ -7,7 +7,7 @@ final class FocusController {
 
     private var enabledByUs = false
     private static let queue = DispatchQueue(label: "kurama.mute.focus", qos: .userInitiated)
-    private static let installedDefaultsKey = "shortcutsInstalled"
+    private static let installedDefaultsKey = DefaultsKey.shortcutsInstalled
 
     func setup() {
         guard !UserDefaults.standard.bool(forKey: Self.installedDefaultsKey) else { return }

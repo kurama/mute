@@ -20,12 +20,12 @@ final class MuteApp: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         UserDefaults.standard.register(defaults: [
-            "soundFeedbackEnabled": true,
-            "defaultFocusMinutes": 30,
-            "panelDismissOnOutsideClick": true,
+            DefaultsKey.soundFeedbackEnabled: true,
+            DefaultsKey.defaultFocusMinutes: 30,
+            DefaultsKey.panelDismissOnOutsideClick: true,
         ])
 
-        if UserDefaults.standard.bool(forKey: "onboardingCompleted") {
+        if UserDefaults.standard.bool(forKey: DefaultsKey.onboardingCompleted) {
             startApp()
         } else {
             NSApp.setActivationPolicy(.regular)
@@ -72,7 +72,7 @@ final class MuteApp: NSObject, NSApplicationDelegate {
             fc?.handleMediaState(isActive: isActive)
             sb?.updateState(isActive: isActive)
             if let mm, let vm { vm.update(from: mm) }
-            if UserDefaults.standard.bool(forKey: "soundFeedbackEnabled") {
+            if UserDefaults.standard.bool(forKey: DefaultsKey.soundFeedbackEnabled) {
                 isActive ? SoundFeedback.playDndOn() : SoundFeedback.playDndOff()
             }
         }
@@ -93,7 +93,7 @@ final class MuteApp: NSObject, NSApplicationDelegate {
             if mm.isFocusing {
                 mm.endFocus()
             } else {
-                let minutes = max(1, UserDefaults.standard.integer(forKey: "defaultFocusMinutes"))
+                let minutes = max(1, UserDefaults.standard.integer(forKey: DefaultsKey.defaultFocusMinutes))
                 mm.startFocus(for: TimeInterval(minutes * 60))
             }
         }
@@ -118,14 +118,12 @@ final class MuteApp: NSObject, NSApplicationDelegate {
     private func replayOnboarding() {
         settingsWindow?.close()
         NSApp.setActivationPolicy(.regular)
-        let wc = OnboardingWindowController.show(terminatesOnClose: false) { [weak self] in
+        let finish: () -> Void = { [weak self] in
             self?.onboardingController = nil
             NSApp.setActivationPolicy(.accessory)
         }
-        wc.onDismiss = { [weak self] in
-            self?.onboardingController = nil
-            NSApp.setActivationPolicy(.accessory)
-        }
+        let wc = OnboardingWindowController.show(terminatesOnClose: false, onComplete: finish)
+        wc.onDismiss = finish
         onboardingController = wc
         NSApp.activate(ignoringOtherApps: true)
     }

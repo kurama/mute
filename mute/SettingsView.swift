@@ -17,23 +17,21 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
 }
 
 struct SettingsView: View {
-    let initialTriggerMode: TriggerMode
     let onTriggerModeChange: (TriggerMode) -> Void
     let onReplayOnboarding: () -> Void
 
     @State private var tab: SettingsTab = .general
     @State private var mode: TriggerMode
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
-    @AppStorage("soundFeedbackEnabled") private var soundFeedbackEnabled = true
-    @AppStorage("defaultFocusMinutes") private var defaultFocusMinutes = 30
-    @AppStorage("panelDismissOnOutsideClick") private var panelDismissOnOutsideClick = true
+    @AppStorage(DefaultsKey.soundFeedbackEnabled) private var soundFeedbackEnabled = true
+    @AppStorage(DefaultsKey.defaultFocusMinutes) private var defaultFocusMinutes = 30
+    @AppStorage(DefaultsKey.panelDismissOnOutsideClick) private var panelDismissOnOutsideClick = true
 
     init(
         initialTriggerMode: TriggerMode,
         onTriggerModeChange: @escaping (TriggerMode) -> Void,
         onReplayOnboarding: @escaping () -> Void
     ) {
-        self.initialTriggerMode = initialTriggerMode
         self.onTriggerModeChange = onTriggerModeChange
         self.onReplayOnboarding = onReplayOnboarding
         _mode = State(initialValue: initialTriggerMode)
@@ -233,18 +231,9 @@ struct SettingsView: View {
     }
 
     private func durationPill(_ minutes: Int) -> some View {
-        Button {
+        selectablePill(minutes < 60 ? "\(minutes) min" : "1 hour", isSelected: defaultFocusMinutes == minutes) {
             defaultFocusMinutes = minutes
-        } label: {
-            Text(minutes < 60 ? "\(minutes) min" : "1 hour")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(defaultFocusMinutes == minutes ? .white : .white.opacity(0.5))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(defaultFocusMinutes == minutes ? Color.muteBlue : Color.white.opacity(0.08))
-                .clipShape(Capsule())
         }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Building blocks
@@ -278,16 +267,20 @@ struct SettingsView: View {
     }
 
     private func triggerPill(_ title: String, _ value: TriggerMode) -> some View {
-        Button {
+        selectablePill(title, isSelected: mode == value) {
             mode = value
             onTriggerModeChange(value)
-        } label: {
+        }
+    }
+
+    private func selectablePill(_ title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             Text(title)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(mode == value ? .white : .white.opacity(0.5))
+                .foregroundStyle(isSelected ? .white : .white.opacity(0.5))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
-                .background(mode == value ? Color.muteBlue : Color.white.opacity(0.08))
+                .background(isSelected ? Color.muteBlue : Color.white.opacity(0.08))
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)
