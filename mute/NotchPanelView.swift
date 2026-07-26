@@ -16,10 +16,10 @@ struct NotchPanelView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                settingsButton
-                Spacer()
                 if viewModel.triggerMode != .cameraOnly { micWingView }
                 if viewModel.triggerMode != .micOnly { cameraWingView }
+                Spacer()
+                settingsButton
             }
             .padding(.horizontal, edgePadding)
             .frame(height: notchHeight)
@@ -38,8 +38,6 @@ struct NotchPanelView: View {
                 .foregroundStyle(.white.opacity(0.6))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 5)
-                .background(Color.white.opacity(0.08))
-                .clipShape(Capsule())
         }
         .buttonStyle(.plain)
     }
