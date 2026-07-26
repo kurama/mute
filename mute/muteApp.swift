@@ -19,7 +19,11 @@ final class MuteApp: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        UserDefaults.standard.register(defaults: ["soundFeedbackEnabled": true, "defaultFocusMinutes": 30])
+        UserDefaults.standard.register(defaults: [
+            "soundFeedbackEnabled": true,
+            "defaultFocusMinutes": 30,
+            "panelDismissOnOutsideClick": true,
+        ])
 
         if UserDefaults.standard.bool(forKey: "onboardingCompleted") {
             startApp()
