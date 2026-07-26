@@ -4,9 +4,14 @@ import SwiftUI
 final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     static func make(
         triggerMode: TriggerMode,
-        onTriggerModeChange: @escaping (TriggerMode) -> Void
+        onTriggerModeChange: @escaping (TriggerMode) -> Void,
+        onReplayOnboarding: @escaping () -> Void
     ) -> SettingsWindowController {
-        let view = SettingsView(initialTriggerMode: triggerMode, onTriggerModeChange: onTriggerModeChange)
+        let view = SettingsView(
+            initialTriggerMode: triggerMode,
+            onTriggerModeChange: onTriggerModeChange,
+            onReplayOnboarding: onReplayOnboarding
+        )
         let hosting = NSHostingController(rootView: view)
         hosting.sizingOptions = []
 
@@ -17,7 +22,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.isMovableByWindowBackground = true
         window.backgroundColor = NSColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1)
         window.appearance = NSAppearance(named: .darkAqua)
-        window.setContentSize(NSSize(width: 520, height: 340))
+        window.setContentSize(NSSize(width: 580, height: 340))
         window.center()
         window.isReleasedWhenClosed = false
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true

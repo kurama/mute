@@ -3,7 +3,7 @@ import ServiceManagement
 import KeyboardShortcuts
 
 private enum SettingsTab: String, CaseIterable, Identifiable {
-    case general, triggers, focus, shortcuts
+    case general, triggers, focus, shortcuts, appearance
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -11,6 +11,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .triggers: "Triggers"
         case .focus: "Focus"
         case .shortcuts: "Shortcuts"
+        case .appearance: "Appearance"
         }
     }
 }
@@ -25,6 +26,7 @@ struct SettingsView: View {
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @AppStorage("soundFeedbackEnabled") private var soundFeedbackEnabled = true
     @AppStorage("defaultFocusMinutes") private var defaultFocusMinutes = 30
+    @AppStorage("panelDismissOnOutsideClick") private var panelDismissOnOutsideClick = true
 
     init(
         initialTriggerMode: TriggerMode,
@@ -52,6 +54,7 @@ struct SettingsView: View {
                     case .triggers: triggerPane.transition(.opacity)
                     case .focus: focusPane.transition(.opacity)
                     case .shortcuts: shortcutPane.transition(.opacity)
+                    case .appearance: appearancePane.transition(.opacity)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -59,28 +62,34 @@ struct SettingsView: View {
                 .animation(.easeInOut(duration: 0.18), value: tab)
             }
         }
-        .frame(width: 520, height: 340)
+        .frame(width: 580, height: 340)
     }
 
     // MARK: - Tab bar
 
     private var tabBar: some View {
-        HStack(spacing: 8) {
-            ForEach(SettingsTab.allCases) { item in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.18)) { tab = item }
-                } label: {
-                    Text(item.title)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(tab == item ? .white : .white.opacity(0.45))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 7)
-                        .background(tab == item ? Color.muteBlue : Color.white.opacity(0.06))
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
+        HStack(spacing: 0) {
+            ForEach(Array(SettingsTab.allCases.enumerated()), id: \.element.id) { index, item in
+                if index > 0 { Spacer(minLength: 6) }
+                tabPill(item)
             }
         }
+        .padding(.horizontal, 40)
+    }
+
+    private func tabPill(_ item: SettingsTab) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.18)) { tab = item }
+        } label: {
+            Text(item.title)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(tab == item ? .white : .white.opacity(0.45))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 7)
+                .background(tab == item ? Color.muteBlue : Color.white.opacity(0.06))
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Panes
@@ -201,6 +210,18 @@ struct SettingsView: View {
                 row(title: "Start / end Focus", subtitle: "Uses your default Focus duration") {
                     KeyboardShortcuts.Recorder("", name: .toggleFocus)
                 }
+            }
+        }
+    }
+
+    private var appearancePane: some View {
+        card {
+            row(title: "Dismiss when clicking outside",
+                subtitle: "Hide the panel automatically when you click elsewhere") {
+                Toggle("", isOn: $panelDismissOnOutsideClick)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .tint(Color.muteBlue)
             }
         }
     }

@@ -3,10 +3,14 @@ import SwiftUI
 
 final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
     var onComplete: (() -> Void)?
+    var onDismiss: (() -> Void)?
+    /// First run quits the app when the window is closed unfinished; a replay just dismisses.
+    var terminatesOnClose = true
 
-    static func show(onComplete: @escaping () -> Void) -> OnboardingWindowController {
+    static func show(terminatesOnClose: Bool = true, onComplete: @escaping () -> Void) -> OnboardingWindowController {
         let wc = OnboardingWindowController()
         wc.onComplete = onComplete
+        wc.terminatesOnClose = terminatesOnClose
 
         let view = OnboardingView { [weak wc] in wc?.complete() }
         let hosting = NSHostingController(rootView: view)
@@ -43,6 +47,12 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         onComplete = nil
-        NSApp.terminate(nil)
+        if terminatesOnClose {
+            NSApp.terminate(nil)
+        } else {
+            let cb = onDismiss
+            onDismiss = nil
+            cb?()
+        }
     }
 }
