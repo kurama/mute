@@ -7,7 +7,7 @@ struct NotchPanelView: View {
     var onToggle: () -> Void
     var onSnooze: (TimeInterval) -> Void
     var onTriggerModeChange: (TriggerMode) -> Void
-    var onLaunchAtLoginChange: (Bool) -> Void
+    var onLaunchAtLoginChange: (Bool) -> Bool
 
     @State private var showSettings = false
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
@@ -208,12 +208,20 @@ struct NotchPanelView: View {
                     .toggleStyle(.switch)
                     .tint(Color.muteBlue)
                     .scaleEffect(0.75, anchor: .trailing)
-                    .onChange(of: launchAtLogin) { _, newValue in onLaunchAtLoginChange(newValue) }
+                    .onChange(of: launchAtLogin) { _, newValue in
+                        // Ignore programmatic syncs (onAppear / revert): only act on a real user change.
+                        guard newValue != (SMAppService.mainApp.status == .enabled) else { return }
+                        let actual = onLaunchAtLoginChange(newValue)
+                        // Reflect reality: if register/unregister failed, snap the toggle back.
+                        if actual != newValue { launchAtLogin = actual }
+                    }
             }
         }
         .padding(.horizontal, 24)
         .frame(maxWidth: .infinity)
         .frame(height: 88)
+        // Re-read the real status every time Settings is opened, not just at launch.
+        .onAppear { launchAtLogin = SMAppService.mainApp.status == .enabled }
     }
 
     private func triggerPill(_ title: String, _ mode: TriggerMode) -> some View {

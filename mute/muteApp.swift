@@ -49,12 +49,18 @@ final class MuteApp: NSObject, NSApplicationDelegate {
             },
             onSnooze: { [weak mm] duration in mm?.snooze(for: duration) },
             onTriggerModeChange: { [weak mm] mode in mm?.triggerMode = mode },
-            onLaunchAtLoginChange: { enabled in
-                if enabled {
-                    try? SMAppService.mainApp.register()
-                } else {
-                    try? SMAppService.mainApp.unregister()
+            onLaunchAtLoginChange: { enabled -> Bool in
+                do {
+                    if enabled {
+                        try SMAppService.mainApp.register()
+                    } else {
+                        try SMAppService.mainApp.unregister()
+                    }
+                } catch {
+                    NSLog("Mute: launch at login \(enabled ? "register" : "unregister") failed: \(error)")
                 }
+                // Return the real resulting state so the UI can reflect a silent failure.
+                return SMAppService.mainApp.status == .enabled
             }
         )
         let sb = StatusBarController(mediaMonitor: mm, focusController: fc, notchPanel: panel)
