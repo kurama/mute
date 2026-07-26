@@ -197,6 +197,11 @@ struct SettingsView: View {
                     KeyboardShortcuts.Recorder("", name: .toggleMonitoring)
                 }
             }
+            card {
+                row(title: "Start / end Focus", subtitle: "Uses your default Focus duration") {
+                    KeyboardShortcuts.Recorder("", name: .toggleFocus)
+                }
+            }
         }
     }
 
