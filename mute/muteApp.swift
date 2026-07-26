@@ -82,13 +82,34 @@ final class MuteApp: NSObject, NSApplicationDelegate {
     }
 
     private func openSettings() {
-        if settingsWindow == nil {
-            settingsWindow = SettingsWindowController.make(
-                triggerMode: mediaMonitor?.triggerMode ?? .micAndCamera,
-                onTriggerModeChange: { [weak self] mode in self?.mediaMonitor?.triggerMode = mode }
-            )
+        // If it's already on screen just focus it; otherwise rebuild so the panes
+        // reflect the current state (launch-at-login, trigger mode) rather than
+        // stale @State from a previous open.
+        if let wc = settingsWindow, wc.window?.isVisible == true {
+            wc.present()
+            return
         }
+        settingsWindow = SettingsWindowController.make(
+            triggerMode: mediaMonitor?.triggerMode ?? .micAndCamera,
+            onTriggerModeChange: { [weak self] mode in self?.mediaMonitor?.triggerMode = mode },
+            onReplayOnboarding: { [weak self] in self?.replayOnboarding() }
+        )
         settingsWindow?.present()
+    }
+
+    private func replayOnboarding() {
+        settingsWindow?.close()
+        NSApp.setActivationPolicy(.regular)
+        let wc = OnboardingWindowController.show(terminatesOnClose: false) { [weak self] in
+            self?.onboardingController = nil
+            NSApp.setActivationPolicy(.accessory)
+        }
+        wc.onDismiss = { [weak self] in
+            self?.onboardingController = nil
+            NSApp.setActivationPolicy(.accessory)
+        }
+        onboardingController = wc
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
