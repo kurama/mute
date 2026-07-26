@@ -77,6 +77,7 @@ final class MuteApp: NSObject, NSApplicationDelegate {
             fc?.handleMediaState(isActive: isActive)
             sb?.updateState(isActive: isActive)
             if let mm, let vm { vm.update(from: mm) }
+            isActive ? SoundFeedback.playDndOn() : SoundFeedback.playDndOff()
         }
         mm.onMonitoringChange = { [weak mm, weak vm] in
             if let mm, let vm { vm.update(from: mm) }
