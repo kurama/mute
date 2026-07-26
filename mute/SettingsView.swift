@@ -156,7 +156,7 @@ struct SettingsView: View {
                 Text("Default Focus duration")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.white.opacity(0.55))
-                Text("Used when you click Focus in the panel")
+                Text("The top option in the panel's Focus menu")
                     .font(.system(size: 12))
                     .foregroundStyle(.white.opacity(0.4))
                 HStack(spacing: 8) {
@@ -164,6 +164,21 @@ struct SettingsView: View {
                     durationPill(15)
                     durationPill(30)
                     durationPill(60)
+                }
+
+                Divider().overlay(Color.white.opacity(0.08))
+
+                HStack(spacing: 10) {
+                    Text("Custom")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.8))
+                    Spacer()
+                    Text(durationLabel(defaultFocusMinutes))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.6))
+                        .monospacedDigit()
+                    Stepper("", value: $defaultFocusMinutes, in: 1...180, step: 5)
+                        .labelsHidden()
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -176,6 +191,12 @@ struct SettingsView: View {
                 KeyboardShortcuts.Recorder("", name: .togglePanel)
             }
         }
+    }
+
+    private func durationLabel(_ minutes: Int) -> String {
+        if minutes < 60 { return "\(minutes) min" }
+        let hours = minutes / 60, mins = minutes % 60
+        return mins == 0 ? "\(hours)h" : "\(hours)h \(mins)m"
     }
 
     private func durationPill(_ minutes: Int) -> some View {
