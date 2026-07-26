@@ -4,7 +4,7 @@ import SwiftUI
 final class NotchPanelWindow: NSPanel {
     private var outsideClickMonitor: Any?
 
-    init(viewModel: NotchPanelViewModel, onToggle: @escaping () -> Void, onFocus: @escaping (TimeInterval) -> Void, onTriggerModeChange: @escaping (TriggerMode) -> Void, onLaunchAtLoginChange: @escaping (Bool) -> Bool) {
+    init(viewModel: NotchPanelViewModel, onToggle: @escaping () -> Void, onFocus: @escaping (TimeInterval) -> Void, onOpenSettings: @escaping () -> Void) {
         let notchH = NSScreen.main?.safeAreaInsets.top ?? 0
         let totalH: CGFloat = 88 + (notchH > 0 ? notchH : 0)
 
@@ -26,8 +26,7 @@ final class NotchPanelWindow: NSPanel {
             notchHeight: notchH,
             onToggle: { [weak self] in onToggle(); self?.hide() },
             onFocus: { duration in onFocus(duration) },
-            onTriggerModeChange: onTriggerModeChange,
-            onLaunchAtLoginChange: onLaunchAtLoginChange
+            onOpenSettings: { [weak self] in onOpenSettings(); self?.hide() }
         )
         .environment(\.colorScheme, .dark)
 

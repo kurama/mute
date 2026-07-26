@@ -5,6 +5,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let mediaMonitor: MediaMonitor
     private let focusController: FocusController
     private weak var notchPanel: NotchPanelWindow?
+    var onOpenSettings: (() -> Void)?
 
     init(mediaMonitor: MediaMonitor, focusController: FocusController, notchPanel: NotchPanelWindow) {
         self.mediaMonitor = mediaMonitor
@@ -55,6 +56,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         showItem.target = self
         menu.addItem(showItem)
 
+        let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
         menu.addItem(.separator())
 
         #if DEBUG
@@ -70,6 +75,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func showPanel() {
         notchPanel?.show()
+    }
+
+    @objc private func openSettings() {
+        onOpenSettings?()
     }
 
     #if DEBUG

@@ -1,5 +1,5 @@
 import AppKit
-import ServiceManagement
+import KeyboardShortcuts
 
 @main
 final class MuteApp: NSObject, NSApplicationDelegate {
@@ -9,6 +9,7 @@ final class MuteApp: NSObject, NSApplicationDelegate {
     private var onboardingController: OnboardingWindowController?
     private var notchPanel: NotchPanelWindow?
     private var notchPanelVM: NotchPanelViewModel?
+    private var settingsWindow: SettingsWindowController?
 
     static func main() {
         let app = NSApplication.shared
@@ -48,22 +49,10 @@ final class MuteApp: NSObject, NSApplicationDelegate {
                 }
             },
             onFocus: { [weak mm] duration in mm?.startFocus(for: duration) },
-            onTriggerModeChange: { [weak mm] mode in mm?.triggerMode = mode },
-            onLaunchAtLoginChange: { enabled -> Bool in
-                do {
-                    if enabled {
-                        try SMAppService.mainApp.register()
-                    } else {
-                        try SMAppService.mainApp.unregister()
-                    }
-                } catch {
-                    NSLog("Mute: launch at login \(enabled ? "register" : "unregister") failed: \(error)")
-                }
-                // Return the real resulting state so the UI can reflect a silent failure.
-                return SMAppService.mainApp.status == .enabled
-            }
+            onOpenSettings: { [weak self] in self?.openSettings() }
         )
         let sb = StatusBarController(mediaMonitor: mm, focusController: fc, notchPanel: panel)
+        sb.onOpenSettings = { [weak self] in self?.openSettings() }
 
         focusController = fc
         mediaMonitor = mm
@@ -84,6 +73,18 @@ final class MuteApp: NSObject, NSApplicationDelegate {
         }
 
         mm.start()
+
+        KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak panel] in panel?.toggle() }
+    }
+
+    private func openSettings() {
+        if settingsWindow == nil {
+            settingsWindow = SettingsWindowController.make(
+                triggerMode: mediaMonitor?.triggerMode ?? .micAndCamera,
+                onTriggerModeChange: { [weak self] mode in self?.mediaMonitor?.triggerMode = mode }
+            )
+        }
+        settingsWindow?.present()
     }
 
     func applicationWillTerminate(_ notification: Notification) {

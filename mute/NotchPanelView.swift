@@ -1,16 +1,11 @@
 import SwiftUI
-import ServiceManagement
 
 struct NotchPanelView: View {
     var viewModel: NotchPanelViewModel
     var notchHeight: CGFloat = 0
     var onToggle: () -> Void
     var onFocus: (TimeInterval) -> Void
-    var onTriggerModeChange: (TriggerMode) -> Void
-    var onLaunchAtLoginChange: (Bool) -> Bool
-
-    @State private var showSettings = false
-    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    var onOpenSettings: () -> Void
 
     // The concave top / convex bottom corners inset the panel body by `cornerRadius`,
     // so content padding must compensate to keep an even margin on every side.
@@ -21,7 +16,7 @@ struct NotchPanelView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                tabButtons
+                settingsButton
                 Spacer()
                 if viewModel.triggerMode != .cameraOnly { micWingView }
                 if viewModel.triggerMode != .micOnly { cameraWingView }
@@ -29,53 +24,24 @@ struct NotchPanelView: View {
             .padding(.horizontal, edgePadding)
             .frame(height: notchHeight)
 
-            if showSettings {
-                settingsView
-                    .transition(.opacity)
-            } else {
-                mainView
-                    .transition(.opacity)
-            }
+            mainView
         }
         .frame(width: 644, height: 88 + notchHeight)
         .background(.black)
         .clipShape(NotchPanelShape(topCornerRadius: cornerRadius, bottomCornerRadius: cornerRadius))
-        .animation(.easeInOut(duration: 0.18), value: showSettings)
     }
 
-    private var tabButtons: some View {
-        HStack(spacing: 6) {
-            Button { showSettings = false } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "house")
-                        .font(.system(size: 11, weight: .medium))
-                    Text("Panel")
-                        .font(.system(size: 11, weight: .medium))
-                }
-                .foregroundStyle(showSettings ? .white.opacity(0.35) : .white.opacity(0.85))
-                .padding(.horizontal, 10)
+    private var settingsButton: some View {
+        Button(action: onOpenSettings) {
+            Image(systemName: "gearshape")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.white.opacity(0.6))
+                .padding(.horizontal, 8)
                 .padding(.vertical, 5)
-                .background(showSettings ? Color.clear : Color.white.opacity(0.08))
+                .background(Color.white.opacity(0.08))
                 .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
-
-            Button { showSettings = true } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 11, weight: .medium))
-                    Text("Settings")
-                        .font(.system(size: 11, weight: .medium))
-                }
-                .foregroundStyle(showSettings ? .white.opacity(0.85) : .white.opacity(0.35))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(showSettings ? Color.white.opacity(0.08) : Color.clear)
-                .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
         }
-        .animation(.easeInOut(duration: 0.15), value: showSettings)
+        .buttonStyle(.plain)
     }
 
     // MARK: - Main view
@@ -184,56 +150,6 @@ struct NotchPanelView: View {
         .fixedSize()
     }
 
-    // MARK: - Settings view
-
-    private var settingsView: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Trigger on")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.55))
-                Spacer()
-                HStack(spacing: 6) {
-                    triggerPill("Mic & Cam", .micAndCamera)
-                    triggerPill("Mic", .micOnly)
-                    triggerPill("Camera", .cameraOnly)
-                }
-            }
-            HStack {
-                Text("Launch at login")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.55))
-                Spacer()
-                Toggle("", isOn: $launchAtLogin)
-                    .toggleStyle(.switch)
-                    .tint(Color.muteBlue)
-                    .scaleEffect(0.75, anchor: .trailing)
-                    .onChange(of: launchAtLogin) { _, newValue in
-                        // Ignore programmatic syncs (onAppear / revert): only act on a real user change.
-                        guard newValue != (SMAppService.mainApp.status == .enabled) else { return }
-                        let actual = onLaunchAtLoginChange(newValue)
-                        // Reflect reality: if register/unregister failed, snap the toggle back.
-                        if actual != newValue { launchAtLogin = actual }
-                    }
-            }
-        }
-        .padding(.horizontal, edgePadding)
-        .frame(maxWidth: .infinity)
-        .frame(height: 88)
-        // Re-read the real status every time Settings is opened, not just at launch.
-        .onAppear { launchAtLogin = SMAppService.mainApp.status == .enabled }
-    }
-
-    private func triggerPill(_ title: String, _ mode: TriggerMode) -> some View {
-        Button(title) { onTriggerModeChange(mode) }
-            .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(viewModel.triggerMode == mode ? .white : .white.opacity(0.45))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(viewModel.triggerMode == mode ? Color.muteBlue : Color.white.opacity(0.08))
-            .clipShape(Capsule())
-            .buttonStyle(.plain)
-    }
 }
 
 /// Panel outline with concave (inverted) fillets at the top corners so the panel
