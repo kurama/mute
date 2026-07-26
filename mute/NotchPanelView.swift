@@ -170,7 +170,7 @@ struct NotchPanelView: View {
             Button("5 min")   { onFocus(5 * 60) }
             Button("15 min")  { onFocus(15 * 60) }
             Button("30 min")  { onFocus(30 * 60) }
-            Button("1 heure") { onFocus(3600) }
+            Button("1 hour")  { onFocus(3600) }
         } label: {
             Text("Focus")
                 .font(.system(size: 11, weight: .medium))
