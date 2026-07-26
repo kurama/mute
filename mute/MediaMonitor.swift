@@ -48,10 +48,10 @@ final class MediaMonitor {
     }
 
     var triggerMode: TriggerMode = {
-        TriggerMode(rawValue: UserDefaults.standard.string(forKey: "triggerMode") ?? "") ?? .micAndCamera
+        TriggerMode(rawValue: UserDefaults.standard.string(forKey: DefaultsKey.triggerMode) ?? "") ?? .micAndCamera
     }() {
         didSet {
-            UserDefaults.standard.set(triggerMode.rawValue, forKey: "triggerMode")
+            UserDefaults.standard.set(triggerMode.rawValue, forKey: DefaultsKey.triggerMode)
             refreshState()
             onMonitoringChange?()
         }

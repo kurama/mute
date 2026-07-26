@@ -96,7 +96,7 @@ private struct ShortcutsStep: View {
     private var allInstalled: Bool { muteOnInstalled && muteOffInstalled }
 
     private static var alreadyInstalled: Bool {
-        UserDefaults.standard.bool(forKey: "shortcutsInstalled")
+        UserDefaults.standard.bool(forKey: DefaultsKey.shortcutsInstalled)
     }
 
     var body: some View {
@@ -155,7 +155,7 @@ private struct ShortcutsStep: View {
                 }
             }
             isInstalling = false
-            UserDefaults.standard.set(true, forKey: "shortcutsInstalled")
+            UserDefaults.standard.set(true, forKey: DefaultsKey.shortcutsInstalled)
         }
     }
 }
@@ -233,7 +233,7 @@ private struct FinishStep: View {
                         NSLog("Mute: launch at login \(launchAtLogin ? "register" : "unregister") failed during onboarding: \(error)")
                     }
                 }
-                UserDefaults.standard.set(true, forKey: "onboardingCompleted")
+                UserDefaults.standard.set(true, forKey: DefaultsKey.onboardingCompleted)
                 onComplete()
             }
         }
