@@ -21,6 +21,7 @@ struct SettingsView: View {
     @State private var tab: SettingsTab = .general
     @State private var mode: TriggerMode
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @AppStorage("soundFeedbackEnabled") private var soundFeedbackEnabled = true
 
     init(initialTriggerMode: TriggerMode, onTriggerModeChange: @escaping (TriggerMode) -> Void) {
         self.initialTriggerMode = initialTriggerMode
@@ -76,25 +77,35 @@ struct SettingsView: View {
     // MARK: - Panes
 
     private var generalPane: some View {
-        card {
-            row(title: "Launch at login", subtitle: "Start Mute automatically when you log in") {
-                Toggle("", isOn: $launchAtLogin)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .tint(Color.muteBlue)
-                    .onChange(of: launchAtLogin) { _, newValue in
-                        guard newValue != (SMAppService.mainApp.status == .enabled) else { return }
-                        do {
-                            if newValue {
-                                try SMAppService.mainApp.register()
-                            } else {
-                                try SMAppService.mainApp.unregister()
+        VStack(spacing: 10) {
+            card {
+                row(title: "Launch at login", subtitle: "Start Mute automatically when you log in") {
+                    Toggle("", isOn: $launchAtLogin)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .tint(Color.muteBlue)
+                        .onChange(of: launchAtLogin) { _, newValue in
+                            guard newValue != (SMAppService.mainApp.status == .enabled) else { return }
+                            do {
+                                if newValue {
+                                    try SMAppService.mainApp.register()
+                                } else {
+                                    try SMAppService.mainApp.unregister()
+                                }
+                            } catch {
+                                NSLog("Mute: launch at login toggle failed: \(error)")
                             }
-                        } catch {
-                            NSLog("Mute: launch at login toggle failed: \(error)")
+                            launchAtLogin = SMAppService.mainApp.status == .enabled
                         }
-                        launchAtLogin = SMAppService.mainApp.status == .enabled
-                    }
+                }
+            }
+            card {
+                row(title: "Sound feedback", subtitle: "Play a soft sound when Do Not Disturb turns on and off") {
+                    Toggle("", isOn: $soundFeedbackEnabled)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .tint(Color.muteBlue)
+                }
             }
         }
         .onAppear { launchAtLogin = SMAppService.mainApp.status == .enabled }
