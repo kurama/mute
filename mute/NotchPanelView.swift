@@ -12,6 +12,12 @@ struct NotchPanelView: View {
     @State private var showSettings = false
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
+    // The concave top / convex bottom corners inset the panel body by `cornerRadius`,
+    // so content padding must compensate to keep an even margin on every side.
+    private let cornerRadius: CGFloat = 22
+    private let contentMargin: CGFloat = 24
+    private var edgePadding: CGFloat { cornerRadius + contentMargin }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
@@ -20,7 +26,7 @@ struct NotchPanelView: View {
                 if viewModel.triggerMode != .cameraOnly { micWingView }
                 if viewModel.triggerMode != .micOnly { cameraWingView }
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, edgePadding)
             .frame(height: notchHeight)
 
             if showSettings {
@@ -31,15 +37,9 @@ struct NotchPanelView: View {
                     .transition(.opacity)
             }
         }
-        .frame(width: 600, height: 88 + notchHeight)
+        .frame(width: 644, height: 88 + notchHeight)
         .background(.black)
-        .clipShape(UnevenRoundedRectangle(
-            topLeadingRadius: 0,
-            bottomLeadingRadius: 22,
-            bottomTrailingRadius: 22,
-            topTrailingRadius: 0,
-            style: .continuous
-        ))
+        .clipShape(NotchPanelShape(topCornerRadius: cornerRadius, bottomCornerRadius: cornerRadius))
         .animation(.easeInOut(duration: 0.18), value: showSettings)
     }
 
@@ -86,7 +86,7 @@ struct NotchPanelView: View {
             Spacer()
             buttonsSection
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, edgePadding)
         .frame(height: 88)
     }
 
@@ -217,7 +217,7 @@ struct NotchPanelView: View {
                     }
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, edgePadding)
         .frame(maxWidth: .infinity)
         .frame(height: 88)
         // Re-read the real status every time Settings is opened, not just at launch.
@@ -233,6 +233,39 @@ struct NotchPanelView: View {
             .background(viewModel.triggerMode == mode ? Color.muteBlue : Color.white.opacity(0.08))
             .clipShape(Capsule())
             .buttonStyle(.plain)
+    }
+}
+
+/// Panel outline with concave (inverted) fillets at the top corners so the panel
+/// appears to flow out of the menu bar, and convex rounded corners at the bottom.
+struct NotchPanelShape: Shape {
+    var topCornerRadius: CGFloat = 14
+    var bottomCornerRadius: CGFloat = 22
+
+    func path(in rect: CGRect) -> Path {
+        let tr = min(topCornerRadius, rect.width / 2, rect.height)
+        let br = min(bottomCornerRadius, (rect.width - 2 * topCornerRadius) / 2, rect.height)
+        var p = Path()
+        // Top edge (full width, flush with the menu bar).
+        p.move(to: CGPoint(x: 0, y: 0))
+        p.addLine(to: CGPoint(x: rect.width, y: 0))
+        // Top-right concave fillet.
+        p.addQuadCurve(to: CGPoint(x: rect.width - tr, y: tr),
+                       control: CGPoint(x: rect.width - tr, y: 0))
+        p.addLine(to: CGPoint(x: rect.width - tr, y: rect.height - br))
+        // Bottom-right convex corner.
+        p.addQuadCurve(to: CGPoint(x: rect.width - tr - br, y: rect.height),
+                       control: CGPoint(x: rect.width - tr, y: rect.height))
+        p.addLine(to: CGPoint(x: tr + br, y: rect.height))
+        // Bottom-left convex corner.
+        p.addQuadCurve(to: CGPoint(x: tr, y: rect.height - br),
+                       control: CGPoint(x: tr, y: rect.height))
+        p.addLine(to: CGPoint(x: tr, y: tr))
+        // Top-left concave fillet.
+        p.addQuadCurve(to: CGPoint(x: 0, y: 0),
+                       control: CGPoint(x: tr, y: 0))
+        p.closeSubpath()
+        return p
     }
 }
 
