@@ -79,6 +79,11 @@ final class MuteApp: NSObject, NSApplicationDelegate {
         mm.start()
 
         KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak panel] in panel?.toggle() }
+        KeyboardShortcuts.onKeyUp(for: .toggleMonitoring) { [weak mm, weak fc] in
+            guard let mm else { return }
+            mm.isMonitoringEnabled.toggle()
+            if !mm.isMonitoringEnabled { fc?.disable() }
+        }
     }
 
     private func openSettings() {

@@ -186,9 +186,16 @@ struct SettingsView: View {
     }
 
     private var shortcutPane: some View {
-        card {
-            row(title: "Show / hide the panel", subtitle: "Global keyboard shortcut") {
-                KeyboardShortcuts.Recorder("", name: .togglePanel)
+        VStack(spacing: 10) {
+            card {
+                row(title: "Show / hide the panel", subtitle: "Global keyboard shortcut") {
+                    KeyboardShortcuts.Recorder("", name: .togglePanel)
+                }
+            }
+            card {
+                row(title: "Enable / disable Mute", subtitle: "Turn mic & camera detection on or off") {
+                    KeyboardShortcuts.Recorder("", name: .toggleMonitoring)
+                }
             }
         }
     }
