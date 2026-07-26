@@ -7,6 +7,8 @@ struct NotchPanelView: View {
     var onFocus: (TimeInterval) -> Void
     var onOpenSettings: () -> Void
 
+    @AppStorage("defaultFocusMinutes") private var defaultFocusMinutes = 30
+
     // The concave top / convex bottom corners inset the panel body by `cornerRadius`,
     // so content padding must compensate to keep an even margin on every side.
     private let cornerRadius: CGFloat = 22
@@ -143,6 +145,8 @@ struct NotchPanelView: View {
                 .padding(.vertical, 6)
                 .background(Color.white.opacity(0.1))
                 .clipShape(Capsule())
+        } primaryAction: {
+            onFocus(TimeInterval(defaultFocusMinutes * 60))
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
