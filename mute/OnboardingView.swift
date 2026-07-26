@@ -223,7 +223,11 @@ private struct FinishStep: View {
 
             OnboardingButton(title: "Start using Mute") {
                 if launchAtLogin {
-                    try? SMAppService.mainApp.register()
+                    do {
+                        try SMAppService.mainApp.register()
+                    } catch {
+                        NSLog("Mute: launch at login register failed during onboarding: \(error)")
+                    }
                 }
                 UserDefaults.standard.set(true, forKey: "onboardingCompleted")
                 onComplete()
