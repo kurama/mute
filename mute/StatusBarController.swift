@@ -54,10 +54,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         let showItem = NSMenuItem(title: "Show Panel", action: #selector(showPanel), keyEquivalent: "")
         showItem.target = self
+        showItem.image = NSImage(systemSymbolName: "macwindow", accessibilityDescription: nil)
         menu.addItem(showItem)
 
         let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
+        settingsItem.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
         menu.addItem(settingsItem)
 
         menu.addItem(.separator())
