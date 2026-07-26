@@ -2,24 +2,7 @@ import SwiftUI
 import ServiceManagement
 import KeyboardShortcuts
 
-struct SettingsView: View {
-    let initialTriggerMode: TriggerMode
-    let onTriggerModeChange: (TriggerMode) -> Void
-
-    var body: some View {
-        TabView {
-            GeneralSettings()
-                .tabItem { Label("General", systemImage: "gearshape") }
-            TriggerSettings(mode: initialTriggerMode, onChange: onTriggerModeChange)
-                .tabItem { Label("Triggers", systemImage: "mic") }
-            ShortcutSettings()
-                .tabItem { Label("Shortcuts", systemImage: "keyboard") }
-        }
-        .frame(width: 460, height: 200)
-    }
-}
-
-private struct GeneralSettings: View {
+struct GeneralSettings: View {
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -45,7 +28,7 @@ private struct GeneralSettings: View {
     }
 }
 
-private struct TriggerSettings: View {
+struct TriggerSettings: View {
     @State var mode: TriggerMode
     let onChange: (TriggerMode) -> Void
 
@@ -63,7 +46,7 @@ private struct TriggerSettings: View {
     }
 }
 
-private struct ShortcutSettings: View {
+struct ShortcutSettings: View {
     var body: some View {
         Form {
             KeyboardShortcuts.Recorder("Show / hide the panel", name: .togglePanel)
