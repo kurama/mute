@@ -19,7 +19,7 @@ final class MuteApp: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        UserDefaults.standard.register(defaults: ["soundFeedbackEnabled": true])
+        UserDefaults.standard.register(defaults: ["soundFeedbackEnabled": true, "defaultFocusMinutes": 30])
 
         if UserDefaults.standard.bool(forKey: "onboardingCompleted") {
             startApp()
@@ -83,6 +83,15 @@ final class MuteApp: NSObject, NSApplicationDelegate {
             guard let mm else { return }
             mm.isMonitoringEnabled.toggle()
             if !mm.isMonitoringEnabled { fc?.disable() }
+        }
+        KeyboardShortcuts.onKeyUp(for: .toggleFocus) { [weak mm] in
+            guard let mm else { return }
+            if mm.isFocusing {
+                mm.endFocus()
+            } else {
+                let minutes = max(1, UserDefaults.standard.integer(forKey: "defaultFocusMinutes"))
+                mm.startFocus(for: TimeInterval(minutes * 60))
+            }
         }
     }
 
