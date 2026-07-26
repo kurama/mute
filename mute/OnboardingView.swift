@@ -187,7 +187,7 @@ private struct ShortcutBadge: View {
 
 private struct FinishStep: View {
     var onComplete: () -> Void
-    @State private var launchAtLogin = false
+    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -222,11 +222,15 @@ private struct FinishStep: View {
             .padding(.bottom, 44)
 
             OnboardingButton(title: "Start using Mute") {
-                if launchAtLogin {
+                if launchAtLogin != (SMAppService.mainApp.status == .enabled) {
                     do {
-                        try SMAppService.mainApp.register()
+                        if launchAtLogin {
+                            try SMAppService.mainApp.register()
+                        } else {
+                            try SMAppService.mainApp.unregister()
+                        }
                     } catch {
-                        NSLog("Mute: launch at login register failed during onboarding: \(error)")
+                        NSLog("Mute: launch at login \(launchAtLogin ? "register" : "unregister") failed during onboarding: \(error)")
                     }
                 }
                 UserDefaults.standard.set(true, forKey: "onboardingCompleted")
@@ -235,6 +239,7 @@ private struct FinishStep: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 60)
+        .onAppear { launchAtLogin = SMAppService.mainApp.status == .enabled }
     }
 }
 
