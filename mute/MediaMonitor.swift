@@ -20,29 +20,29 @@ final class MediaMonitor {
         }
     }
 
-    private(set) var isSnoozed = false
-    private(set) var snoozeEndsAt: Date?
-    private var snoozeTimer: Timer?
+    private(set) var isFocusing = false
+    private(set) var focusEndsAt: Date?
+    private var focusTimer: Timer?
 
-    func snooze(for duration: TimeInterval = 1800) {
-        snoozeTimer?.invalidate()
-        isSnoozed = true
-        snoozeEndsAt = Date().addingTimeInterval(duration)
+    func startFocus(for duration: TimeInterval = 1800) {
+        focusTimer?.invalidate()
+        isFocusing = true
+        focusEndsAt = Date().addingTimeInterval(duration)
         if !isActive {
             isActive = true
             onStateChange?(true)
         }
-        snoozeTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
-            self?.cancelSnooze()
+        focusTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
+            self?.endFocus()
         }
         onMonitoringChange?()
     }
 
-    func cancelSnooze() {
-        snoozeTimer?.invalidate()
-        snoozeTimer = nil
-        isSnoozed = false
-        snoozeEndsAt = nil
+    func endFocus() {
+        focusTimer?.invalidate()
+        focusTimer = nil
+        isFocusing = false
+        focusEndsAt = nil
         refreshState()
         onMonitoringChange?()
     }
@@ -212,7 +212,7 @@ final class MediaMonitor {
     }
 
     private func refreshState() {
-        guard !isSnoozed else { return }
+        guard !isFocusing else { return }
         let triggered: Bool
         switch triggerMode {
         case .micAndCamera: triggered = isMicActive || isCameraActive
@@ -226,10 +226,10 @@ final class MediaMonitor {
     }
 
     private func forceIdle() {
-        if isSnoozed {
-            snoozeTimer?.invalidate()
-            snoozeTimer = nil
-            isSnoozed = false
+        if isFocusing {
+            focusTimer?.invalidate()
+            focusTimer = nil
+            isFocusing = false
         }
         isMicActive = false
         isCameraActive = false
