@@ -32,7 +32,7 @@ final class NotchPanelWindow: NSPanel {
         .environment(\.colorScheme, .dark)
 
         let host = NSHostingView(rootView: view)
-        host.frame = NSRect(x: 0, y: 0, width: 600, height: totalH)
+        host.frame = NSRect(x: 0, y: 0, width: 644, height: totalH)
         contentView = host
     }
 
@@ -64,7 +64,7 @@ final class NotchPanelWindow: NSPanel {
     }
 
     private func position(on screen: NSScreen) {
-        let w: CGFloat = 600
+        let w: CGFloat = 644
         let notchH = screen.safeAreaInsets.top
         let h: CGFloat = 88 + (notchH > 0 ? notchH : 0)
         let x = screen.frame.midX - w / 2
