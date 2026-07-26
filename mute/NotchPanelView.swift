@@ -5,7 +5,7 @@ struct NotchPanelView: View {
     var viewModel: NotchPanelViewModel
     var notchHeight: CGFloat = 0
     var onToggle: () -> Void
-    var onSnooze: (TimeInterval) -> Void
+    var onFocus: (TimeInterval) -> Void
     var onTriggerModeChange: (TriggerMode) -> Void
     var onLaunchAtLoginChange: (Bool) -> Bool
 
@@ -131,13 +131,13 @@ struct NotchPanelView: View {
             Text("Do Not Disturb")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
-            if viewModel.isActive || viewModel.isSnoozed {
+            if viewModel.isActive || viewModel.isFocusing {
                 TimelineView(.periodic(from: .now, by: 1)) { _ in
                     HStack(spacing: 4) {
                         Circle()
                             .fill(Color.muteBlue)
                             .frame(width: 5, height: 5)
-                        Text(viewModel.isSnoozed ? "Snooze · \(viewModel.snoozeRemaining)" : "DND · \(viewModel.dndDuration)")
+                        Text(viewModel.isFocusing ? "Focus · \(viewModel.focusRemaining)" : "DND · \(viewModel.dndDuration)")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(Color.muteBlue)
                     }
@@ -152,27 +152,27 @@ struct NotchPanelView: View {
 
     private var buttonsSection: some View {
         HStack(spacing: 8) {
-            if viewModel.isSnoozed {
-                PillButton(title: "Cancel Snooze", style: .positive) { onToggle() }
+            if viewModel.isFocusing {
+                PillButton(title: "End Focus", style: .positive) { onToggle() }
             } else if viewModel.isMonitoringEnabled {
                 if viewModel.isActive {
                     PillButton(title: "Disable", style: .neutral) { onToggle() }
                 }
-                snoozeMenu
+                focusMenu
             } else {
                 PillButton(title: "Enable", style: .neutral) { onToggle() }
             }
         }
     }
 
-    private var snoozeMenu: some View {
+    private var focusMenu: some View {
         Menu {
-            Button("5 min")   { onSnooze(5 * 60) }
-            Button("15 min")  { onSnooze(15 * 60) }
-            Button("30 min")  { onSnooze(30 * 60) }
-            Button("1 heure") { onSnooze(3600) }
+            Button("5 min")   { onFocus(5 * 60) }
+            Button("15 min")  { onFocus(15 * 60) }
+            Button("30 min")  { onFocus(30 * 60) }
+            Button("1 heure") { onFocus(3600) }
         } label: {
-            Text("Snooze")
+            Text("Focus")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 12)

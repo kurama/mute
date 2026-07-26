@@ -40,14 +40,14 @@ final class MuteApp: NSObject, NSApplicationDelegate {
             viewModel: vm,
             onToggle: { [weak mm, weak fc] in
                 guard let mm else { return }
-                if mm.isSnoozed {
-                    mm.cancelSnooze()
+                if mm.isFocusing {
+                    mm.endFocus()
                 } else {
                     mm.isMonitoringEnabled.toggle()
                     if !mm.isMonitoringEnabled { fc?.disable() }
                 }
             },
-            onSnooze: { [weak mm] duration in mm?.snooze(for: duration) },
+            onFocus: { [weak mm] duration in mm?.startFocus(for: duration) },
             onTriggerModeChange: { [weak mm] mode in mm?.triggerMode = mode },
             onLaunchAtLoginChange: { enabled -> Bool in
                 do {

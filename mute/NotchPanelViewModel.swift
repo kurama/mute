@@ -7,10 +7,10 @@ final class NotchPanelViewModel {
     var isCameraActive = false
     var isActive = false
     var isMonitoringEnabled = true
-    var isSnoozed = false
+    var isFocusing = false
     var triggerMode: TriggerMode = .micAndCamera
     private(set) var activeSince: Date?
-    private(set) var snoozeEndsAt: Date?
+    private(set) var focusEndsAt: Date?
 
     func update(from monitor: MediaMonitor) {
         if monitor.isActive && !isActive { activeSince = Date() }
@@ -19,13 +19,13 @@ final class NotchPanelViewModel {
         isCameraActive = monitor.isCameraActive
         isActive = monitor.isActive
         isMonitoringEnabled = monitor.isMonitoringEnabled
-        isSnoozed = monitor.isSnoozed
-        snoozeEndsAt = monitor.snoozeEndsAt
+        isFocusing = monitor.isFocusing
+        focusEndsAt = monitor.focusEndsAt
         triggerMode = monitor.triggerMode
     }
 
-    var snoozeRemaining: String {
-        guard let end = snoozeEndsAt else { return "" }
+    var focusRemaining: String {
+        guard let end = focusEndsAt else { return "" }
         let remaining = max(0, Int(end.timeIntervalSinceNow))
         let h = remaining / 3600
         let m = (remaining % 3600) / 60
