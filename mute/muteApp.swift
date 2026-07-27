@@ -58,7 +58,7 @@ final class MuteApp: NSObject, NSApplicationDelegate {
             onFocus: { [weak mm] duration in mm?.startFocus(for: duration) },
             onOpenSettings: { [weak self] in self?.openSettings() }
         )
-        let sb = StatusBarController(mediaMonitor: mm, focusController: fc, notchPanel: panel)
+        let sb = StatusBarController(notchPanel: panel)
         sb.onOpenSettings = { [weak self] in self?.openSettings() }
         panel.statusItemFrameProvider = { [weak sb] in sb?.statusItemScreenFrame }
 
