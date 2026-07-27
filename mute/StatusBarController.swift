@@ -2,14 +2,10 @@ import AppKit
 
 final class StatusBarController: NSObject, NSMenuDelegate {
     private let barItem: NSStatusItem
-    private let mediaMonitor: MediaMonitor
-    private let focusController: FocusController
     private weak var notchPanel: NotchPanelWindow?
     var onOpenSettings: (() -> Void)?
 
-    init(mediaMonitor: MediaMonitor, focusController: FocusController, notchPanel: NotchPanelWindow) {
-        self.mediaMonitor = mediaMonitor
-        self.focusController = focusController
+    init(notchPanel: NotchPanelWindow) {
         self.notchPanel = notchPanel
         barItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
