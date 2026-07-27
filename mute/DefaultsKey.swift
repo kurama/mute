@@ -9,4 +9,6 @@ enum DefaultsKey {
     static let soundFeedbackEnabled = "soundFeedbackEnabled"
     static let defaultFocusMinutes = "defaultFocusMinutes"
     static let panelDismissOnOutsideClick = "panelDismissOnOutsideClick"
+    static let panelPosition = "panelPosition"
+    static let panelFloatingOrigin = "panelFloatingOrigin"
 }

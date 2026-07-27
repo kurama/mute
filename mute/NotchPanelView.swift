@@ -8,6 +8,9 @@ struct NotchPanelView: View {
     var onOpenSettings: () -> Void
 
     @AppStorage(DefaultsKey.defaultFocusMinutes) private var defaultFocusMinutes = 30
+    @AppStorage(DefaultsKey.panelPosition) private var panelPositionRaw = PanelPosition.notch.rawValue
+
+    private var isFloating: Bool { PanelPosition(rawValue: panelPositionRaw) == .floating }
 
     // The concave top / convex bottom corners inset the panel body by `cornerRadius`,
     // so content padding must compensate to keep an even margin on every side.
@@ -16,21 +19,51 @@ struct NotchPanelView: View {
     private var edgePadding: CGFloat { cornerRadius + contentMargin }
 
     var body: some View {
+        if isFloating {
+            let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+            floatingBody
+                .background(.ultraThinMaterial, in: shape)
+                .overlay(shape.strokeBorder(.white.opacity(0.12), lineWidth: 1))
+        } else {
+            notchBody.clipShape(NotchPanelShape(topCornerRadius: cornerRadius, bottomCornerRadius: cornerRadius))
+        }
+    }
+
+    // Shared by both layouts.
+    private var headerRow: some View {
+        HStack(spacing: 8) {
+            if viewModel.triggerMode != .cameraOnly { micWingView }
+            if viewModel.triggerMode != .micOnly { cameraWingView }
+            Spacer()
+            settingsButton
+        }
+    }
+
+    // Wide layout that flows out of the notch.
+    private var notchBody: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                if viewModel.triggerMode != .cameraOnly { micWingView }
-                if viewModel.triggerMode != .micOnly { cameraWingView }
-                Spacer()
-                settingsButton
-            }
-            .padding(.horizontal, edgePadding)
-            .frame(height: notchHeight)
+            headerRow
+                .padding(.horizontal, edgePadding)
+                .frame(height: notchHeight)
 
             mainView
         }
         .frame(width: 644, height: 88 + notchHeight)
         .background(.black)
-        .clipShape(NotchPanelShape(topCornerRadius: cornerRadius, bottomCornerRadius: cornerRadius))
+    }
+
+    // Compact layout; status and actions share a row so the width fills.
+    private var floatingBody: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            headerRow
+            HStack(spacing: 8) {
+                dndStatusSection
+                Spacer(minLength: 8)
+                buttonsSection
+            }
+        }
+        .padding(18)
+        .frame(width: PanelPosition.floatingWidth, alignment: .leading)
     }
 
     private var settingsButton: some View {

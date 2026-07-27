@@ -26,6 +26,7 @@ struct SettingsView: View {
     @AppStorage(DefaultsKey.soundFeedbackEnabled) private var soundFeedbackEnabled = true
     @AppStorage(DefaultsKey.defaultFocusMinutes) private var defaultFocusMinutes = 30
     @AppStorage(DefaultsKey.panelDismissOnOutsideClick) private var panelDismissOnOutsideClick = true
+    @AppStorage(DefaultsKey.panelPosition) private var panelPositionRaw = PanelPosition.notch.rawValue
 
     init(
         initialTriggerMode: TriggerMode,
@@ -213,14 +214,37 @@ struct SettingsView: View {
     }
 
     private var appearancePane: some View {
-        card {
-            row(title: "Dismiss when clicking outside",
-                subtitle: "Hide the panel automatically when you click elsewhere") {
-                Toggle("", isOn: $panelDismissOnOutsideClick)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .tint(Color.muteBlue)
+        VStack(spacing: 10) {
+            card {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Panel position")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.55))
+                    Text("Use a floating panel if another app already lives in the notch")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.4))
+                    HStack(spacing: 8) {
+                        positionPill("Notch", .notch)
+                        positionPill("Floating", .floating)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            card {
+                row(title: "Dismiss when clicking outside",
+                    subtitle: "Hide the panel automatically when you click elsewhere") {
+                    Toggle("", isOn: $panelDismissOnOutsideClick)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .tint(Color.muteBlue)
+                }
+            }
+        }
+    }
+
+    private func positionPill(_ title: String, _ value: PanelPosition) -> some View {
+        selectablePill(title, isSelected: panelPositionRaw == value.rawValue) {
+            panelPositionRaw = value.rawValue
         }
     }
 

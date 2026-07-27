@@ -23,6 +23,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         setIcon(isActive: isActive)
     }
 
+    /// The icon's frame in screen coordinates, so the panel can anchor under it.
+    var statusItemScreenFrame: NSRect? {
+        guard let button = barItem.button, let window = button.window else { return nil }
+        return window.convertToScreen(button.convert(button.bounds, to: nil))
+    }
+
     private func setIcon(isActive: Bool) {
         guard let button = barItem.button else { return }
         guard let url = Bundle.main.url(forResource: "StatusBarIcon", withExtension: "svg"),
@@ -39,6 +45,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     @objc private func handleClick(_ sender: NSStatusBarButton) {
+        // Left-click opens the panel (at the notch or floating, per the setting);
+        // right-click shows the menu — like any other menu bar app.
+        guard NSApp.currentEvent?.type == .rightMouseUp else {
+            notchPanel?.toggle()
+            return
+        }
         let menu = buildMenu()
         menu.delegate = self
         barItem.menu = menu
@@ -51,11 +63,6 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
-
-        let showItem = NSMenuItem(title: "Show Panel", action: #selector(showPanel), keyEquivalent: "")
-        showItem.target = self
-        showItem.image = NSImage(systemSymbolName: "macwindow", accessibilityDescription: nil)
-        menu.addItem(showItem)
 
         let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
@@ -73,10 +80,6 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         menu.addItem(NSMenuItem(title: "Quit Mute", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         return menu
-    }
-
-    @objc private func showPanel() {
-        notchPanel?.show()
     }
 
     @objc private func openSettings() {
