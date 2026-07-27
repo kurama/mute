@@ -7,8 +7,8 @@ final class NotchPanelWindow: NSPanel, NSWindowDelegate {
     var statusItemFrameProvider: (() -> NSRect?)?
 
     init(viewModel: NotchPanelViewModel, onToggle: @escaping () -> Void, onFocus: @escaping (TimeInterval) -> Void, onOpenSettings: @escaping () -> Void) {
-        let notchH = NSScreen.main?.safeAreaInsets.top ?? 0
-        let totalH: CGFloat = 88 + (notchH > 0 ? notchH : 0)
+        let notchH = NSScreen.main?.effectiveNotchHeight ?? PanelPosition.fallbackNotchHeight
+        let totalH: CGFloat = 88 + notchH
 
         super.init(
             contentRect: .zero,
@@ -44,7 +44,7 @@ final class NotchPanelWindow: NSPanel, NSWindowDelegate {
         guard let screen = NSScreen.main else { return }
         let position = PanelPosition.current
         // Only the free-floating panel is draggable and casts a shadow;
-        // the notch panel is pinned and flush against the menu bar.
+        // the notch panel is pinned flush against the top edge.
         isMovable = position == .floating
         isMovableByWindowBackground = position == .floating
         hasShadow = position == .floating
@@ -78,13 +78,12 @@ final class NotchPanelWindow: NSPanel, NSWindowDelegate {
 
     private func positionAtNotch(on screen: NSScreen) {
         let w: CGFloat = 644
-        let notchH = screen.safeAreaInsets.top
-        let h: CGFloat = 88 + (notchH > 0 ? notchH : 0)
+        let h = 88 + screen.effectiveNotchHeight
         contentView?.setFrameSize(NSSize(width: w, height: h))
         let x = screen.frame.midX - w / 2
-        let y = notchH > 0
-            ? screen.frame.maxY - h      // top edge flush with top of screen, merges into notch
-            : screen.visibleFrame.maxY - h
+        // Always hang from the very top edge; on notch-less displays this simulates
+        // a notch instead of leaving the panel floating below the menu bar.
+        let y = screen.frame.maxY - h
         setFrame(NSRect(x: x, y: y, width: w, height: h), display: false)
     }
 
@@ -125,5 +124,13 @@ final class NotchPanelWindow: NSPanel, NSWindowDelegate {
         guard isVisible, PanelPosition.current == .floating else { return }
         UserDefaults.standard.set([Double(frame.origin.x), Double(frame.origin.y)],
                                   forKey: DefaultsKey.panelFloatingOrigin)
+    }
+}
+
+private extension NSScreen {
+    /// The physical notch inset, or a fallback height on notch-less displays.
+    var effectiveNotchHeight: CGFloat {
+        let inset = safeAreaInsets.top
+        return inset > 0 ? inset : PanelPosition.fallbackNotchHeight
     }
 }
