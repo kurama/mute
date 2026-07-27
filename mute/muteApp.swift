@@ -23,6 +23,7 @@ final class MuteApp: NSObject, NSApplicationDelegate {
             DefaultsKey.soundFeedbackEnabled: true,
             DefaultsKey.defaultFocusMinutes: 30,
             DefaultsKey.panelDismissOnOutsideClick: true,
+            DefaultsKey.panelPosition: PanelPosition.notch.rawValue,
         ])
 
         if UserDefaults.standard.bool(forKey: DefaultsKey.onboardingCompleted) {
@@ -59,6 +60,7 @@ final class MuteApp: NSObject, NSApplicationDelegate {
         )
         let sb = StatusBarController(mediaMonitor: mm, focusController: fc, notchPanel: panel)
         sb.onOpenSettings = { [weak self] in self?.openSettings() }
+        panel.statusItemFrameProvider = { [weak sb] in sb?.statusItemScreenFrame }
 
         focusController = fc
         mediaMonitor = mm
