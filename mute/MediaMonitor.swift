@@ -60,11 +60,14 @@ final class MediaMonitor {
     private(set) var isCameraActive = false
 
     private var micDeviceID: AudioDeviceID = kAudioObjectUnknown
+    private var micRunningListener: AudioObjectPropertyListenerBlock?
+    private var defaultInputListener: AudioObjectPropertyListenerBlock?
     private var deviceConnectObserver: NSObjectProtocol?
     private var pollTimer: Timer?
 
     func start() {
         attachMicListener()
+        listenForDefaultInputChanges()
         requestCameraAccessThenListen()
 
         pollTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
@@ -75,6 +78,20 @@ final class MediaMonitor {
         deviceConnectObserver = NotificationCenter.default.addObserver(
             forName: AVCaptureDevice.wasConnectedNotification, object: nil, queue: .main
         ) { [weak self] _ in self?.attachCameraListener() }
+    }
+
+    // The default input device changes when a headset connects, a mic is unplugged,
+    // or the user picks another one in System Settings. Re-point the mic listener at
+    // it so detection doesn't stay stuck on the device that was default at launch.
+    private func listenForDefaultInputChanges() {
+        var address = defaultInputAddress
+        let listener: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
+            MainActor.assumeIsolated { self?.attachMicListener() }
+        }
+        defaultInputListener = listener
+        AudioObjectAddPropertyListenerBlock(
+            AudioObjectID(kAudioObjectSystemObject), &address, DispatchQueue.main, listener
+        )
     }
 
     private func requestCameraAccessThenListen() {
@@ -96,32 +113,57 @@ final class MediaMonitor {
         if let obs = deviceConnectObserver {
             NotificationCenter.default.removeObserver(obs)
         }
+        detachMicListener()
+        if let listener = defaultInputListener {
+            var address = defaultInputAddress
+            AudioObjectRemovePropertyListenerBlock(
+                AudioObjectID(kAudioObjectSystemObject), &address, DispatchQueue.main, listener
+            )
+            defaultInputListener = nil
+        }
     }
+
+    private var defaultInputAddress = AudioObjectPropertyAddress(
+        mSelector: kAudioHardwarePropertyDefaultInputDevice,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: kAudioObjectPropertyElementMain
+    )
+
+    private var micRunningAddress = AudioObjectPropertyAddress(
+        mSelector: kAudioDevicePropertyDeviceIsRunningSomewhere,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: kAudioObjectPropertyElementMain
+    )
 
     // kAudioDevicePropertyDeviceIsRunningSomewhere is the same signal that drives
     // the orange mic indicator in the macOS menu bar — reliable across all apps.
+    // Called again whenever the default input changes, so it re-points at the new one.
     private func attachMicListener() {
-        var hwAddress = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyDefaultInputDevice,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
+        var address = defaultInputAddress
         var deviceID: AudioDeviceID = kAudioObjectUnknown
         var size = UInt32(MemoryLayout<AudioDeviceID>.size)
         guard AudioObjectGetPropertyData(
-            AudioObjectID(kAudioObjectSystemObject), &hwAddress, 0, nil, &size, &deviceID
+            AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &deviceID
         ) == noErr, deviceID != kAudioObjectUnknown else { return }
 
+        guard deviceID != micDeviceID else { return }
+        detachMicListener()
         micDeviceID = deviceID
 
-        var runningAddress = AudioObjectPropertyAddress(
-            mSelector: kAudioDevicePropertyDeviceIsRunningSomewhere,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
-        AudioObjectAddPropertyListenerBlock(deviceID, &runningAddress, DispatchQueue.main) { [weak self] _, _ in
+        var runningAddress = micRunningAddress
+        let listener: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
             MainActor.assumeIsolated { self?.refreshMicState() }
         }
+        micRunningListener = listener
+        AudioObjectAddPropertyListenerBlock(deviceID, &runningAddress, DispatchQueue.main, listener)
+        refreshMicState()
+    }
+
+    private func detachMicListener() {
+        guard micDeviceID != kAudioObjectUnknown, let listener = micRunningListener else { return }
+        var runningAddress = micRunningAddress
+        AudioObjectRemovePropertyListenerBlock(micDeviceID, &runningAddress, DispatchQueue.main, listener)
+        micRunningListener = nil
     }
 
     private func refreshMicState() {
