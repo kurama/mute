@@ -38,6 +38,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             button.image = img
         }
         button.contentTintColor = nil
+        button.setAccessibilityLabel(isActive ? "Mute — Do Not Disturb on" : "Mute — Do Not Disturb off")
     }
 
     @objc private func handleClick(_ sender: NSStatusBarButton) {
