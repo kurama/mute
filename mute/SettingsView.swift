@@ -181,7 +181,7 @@ struct SettingsView: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.white.opacity(0.8))
                     Spacer()
-                    Text(durationLabel(defaultFocusMinutes))
+                    Text(defaultFocusMinutes.focusDurationLabel)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.white.opacity(0.6))
                         .monospacedDigit()
@@ -246,12 +246,6 @@ struct SettingsView: View {
         selectablePill(title, isSelected: panelPositionRaw == value.rawValue) {
             panelPositionRaw = value.rawValue
         }
-    }
-
-    private func durationLabel(_ minutes: Int) -> String {
-        if minutes < 60 { return "\(minutes) min" }
-        let hours = minutes / 60, mins = minutes % 60
-        return mins == 0 ? "\(hours)h" : "\(hours)h \(mins)m"
     }
 
     private func durationPill(_ minutes: Int) -> some View {
