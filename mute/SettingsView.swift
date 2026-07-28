@@ -172,10 +172,9 @@ struct SettingsView: View {
                     .font(.system(size: 12))
                     .foregroundStyle(.white.opacity(0.4))
                 HStack(spacing: 8) {
-                    durationPill(5)
-                    durationPill(15)
-                    durationPill(30)
-                    durationPill(60)
+                    ForEach(FocusPreset.all, id: \.minutes) { preset in
+                        durationPill(preset.minutes, preset.label)
+                    }
                 }
 
                 Divider().overlay(Color.white.opacity(0.08))
@@ -252,8 +251,8 @@ struct SettingsView: View {
         }
     }
 
-    private func durationPill(_ minutes: Int) -> some View {
-        selectablePill(minutes < 60 ? "\(minutes) min" : "1 hour", isSelected: defaultFocusMinutes == minutes) {
+    private func durationPill(_ minutes: Int, _ label: String) -> some View {
+        selectablePill(label, isSelected: defaultFocusMinutes == minutes) {
             defaultFocusMinutes = minutes
         }
     }
