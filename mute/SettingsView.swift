@@ -17,6 +17,10 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
 }
 
 struct SettingsView: View {
+    /// Fixed size of the settings window; shared with SettingsWindowController so
+    /// the SwiftUI frame and the hosting NSWindow can't drift apart.
+    static let windowSize = CGSize(width: 580, height: 340)
+
     let onTriggerModeChange: (TriggerMode) -> Void
     let onReplayOnboarding: () -> Void
 
@@ -61,7 +65,7 @@ struct SettingsView: View {
                 .animation(.easeInOut(duration: 0.18), value: tab)
             }
         }
-        .frame(width: 580, height: 340)
+        .frame(width: Self.windowSize.width, height: Self.windowSize.height)
     }
 
     // MARK: - Tab bar

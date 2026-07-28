@@ -22,7 +22,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.isMovableByWindowBackground = true
         window.backgroundColor = NSColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1)
         window.appearance = NSAppearance(named: .darkAqua)
-        window.setContentSize(NSSize(width: 580, height: 340))
+        window.setContentSize(SettingsView.windowSize)
         window.center()
         window.isReleasedWhenClosed = false
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
