@@ -31,6 +31,12 @@ final class FocusController {
         enabledByUs = false
     }
 
+    /// Re-run the shortcut import (opens the .shortcut files in the Shortcuts app),
+    /// regardless of the installed flag — used by the settings health warning.
+    func reinstallShortcuts() {
+        Self.queue.async { Self.installShortcuts() }
+    }
+
     private static func installShortcuts() {
         for name in ["Mute On", "Mute Off"] {
             guard let url = Bundle.main.url(forResource: name, withExtension: "shortcut") else {

@@ -5,12 +5,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     static func make(
         triggerMode: TriggerMode,
         onTriggerModeChange: @escaping (TriggerMode) -> Void,
-        onReplayOnboarding: @escaping () -> Void
+        onReplayOnboarding: @escaping () -> Void,
+        onReinstallAutomation: @escaping () -> Void
     ) -> SettingsWindowController {
         let view = SettingsView(
             initialTriggerMode: triggerMode,
             onTriggerModeChange: onTriggerModeChange,
-            onReplayOnboarding: onReplayOnboarding
+            onReplayOnboarding: onReplayOnboarding,
+            onReinstallAutomation: onReinstallAutomation
         )
         let hosting = NSHostingController(rootView: view)
         hosting.sizingOptions = []
