@@ -31,8 +31,12 @@ struct NotchPanelView: View {
     // Shared by both layouts.
     private var headerRow: some View {
         HStack(spacing: 8) {
-            if viewModel.triggerMode != .cameraOnly { micWingView }
-            if viewModel.triggerMode != .micOnly { cameraWingView }
+            if viewModel.triggerMode != .cameraOnly {
+                wingView(icon: "mic", label: "Mic", isActive: viewModel.isMicActive, showWaveform: true)
+            }
+            if viewModel.triggerMode != .micOnly {
+                wingView(icon: "camera", label: "Cam", isActive: viewModel.isCameraActive, showWaveform: false)
+            }
             Spacer()
             settingsButton
         }
@@ -88,40 +92,24 @@ struct NotchPanelView: View {
         .frame(height: PanelPosition.notchBodyHeight)
     }
 
-    private var micWingView: some View {
+    private func wingView(icon: String, label: String, isActive: Bool, showWaveform: Bool) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: viewModel.isMicActive ? "mic.fill" : "mic")
+            Image(systemName: isActive ? "\(icon).fill" : icon)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(viewModel.isMicActive ? .white : .white.opacity(0.35))
-            Text("Mic")
+                .foregroundStyle(isActive ? .white : .white.opacity(0.35))
+            Text(label)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(viewModel.isMicActive ? .white : .white.opacity(0.35))
-            if viewModel.isMicActive {
+                .foregroundStyle(isActive ? .white : .white.opacity(0.35))
+            if showWaveform && isActive {
                 WingWaveformView()
                     .transition(.opacity.combined(with: .scale(scale: 0.8, anchor: .leading)))
             }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(viewModel.isMicActive ? Color.muteBlue : Color.clear)
+        .background(isActive ? Color.muteBlue : Color.clear)
         .clipShape(Capsule())
-        .animation(.spring(duration: 0.25), value: viewModel.isMicActive)
-    }
-
-    private var cameraWingView: some View {
-        HStack(spacing: 6) {
-            Image(systemName: viewModel.isCameraActive ? "camera.fill" : "camera")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(viewModel.isCameraActive ? .white : .white.opacity(0.35))
-            Text("Cam")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(viewModel.isCameraActive ? .white : .white.opacity(0.35))
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(viewModel.isCameraActive ? Color.muteBlue : Color.clear)
-        .clipShape(Capsule())
-        .animation(.spring(duration: 0.25), value: viewModel.isCameraActive)
+        .animation(.spring(duration: 0.25), value: isActive)
     }
 
     private var dndStatusSection: some View {
