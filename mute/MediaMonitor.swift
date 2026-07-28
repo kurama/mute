@@ -43,8 +43,7 @@ final class MediaMonitor {
         focusTimer = nil
         isFocusing = false
         focusEndsAt = nil
-        refreshState()
-        onStateRefresh?()
+        stateDidChange()
     }
 
     var triggerMode: TriggerMode = {
@@ -52,8 +51,7 @@ final class MediaMonitor {
     }() {
         didSet {
             UserDefaults.standard.set(triggerMode.rawValue, forKey: DefaultsKey.triggerMode)
-            refreshState()
-            onStateRefresh?()
+            stateDidChange()
         }
     }
 
@@ -200,13 +198,17 @@ final class MediaMonitor {
     private func setCameraActive(_ active: Bool) {
         guard isCameraActive != active else { return }
         isCameraActive = active
-        refreshState()
-        onStateRefresh?()
+        stateDidChange()
     }
 
     private func setMicActive(_ active: Bool) {
         guard isMicActive != active else { return }
         isMicActive = active
+        stateDidChange()
+    }
+
+    /// Re-evaluate the DND state, then notify observers that panel data changed.
+    private func stateDidChange() {
         refreshState()
         onStateRefresh?()
     }
