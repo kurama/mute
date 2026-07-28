@@ -248,29 +248,6 @@ struct PillButton: View {
     }
 }
 
-struct WaveformView: View {
-    @State private var animating = false
-    private let heights: [CGFloat] = [3, 8, 12, 8, 3]
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 2) {
-            ForEach(0..<5, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(Color.muteBlue)
-                    .frame(width: 2.5, height: animating ? heights[i] : heights[i] * 0.35)
-                    .animation(
-                        .easeInOut(duration: 0.35 + Double(i) * 0.07)
-                            .repeatForever(autoreverses: true)
-                            .delay(Double(i) * 0.09),
-                        value: animating
-                    )
-            }
-        }
-        .frame(height: 14)
-        .onAppear { animating = true }
-    }
-}
-
 struct WingWaveformView: View {
     @State private var animating = false
     private let heights: [CGFloat] = [3, 6, 9, 6, 3]
