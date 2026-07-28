@@ -11,12 +11,12 @@ enum TriggerMode: String {
 final class MediaMonitor {
 
     var onStateChange: ((Bool) -> Void)?
-    var onMonitoringChange: (() -> Void)?
+    var onStateRefresh: (() -> Void)?
 
     var isMonitoringEnabled = true {
         didSet {
             if !isMonitoringEnabled { forceIdle() }
-            onMonitoringChange?()
+            onStateRefresh?()
         }
     }
 
@@ -35,7 +35,7 @@ final class MediaMonitor {
         focusTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
             self?.endFocus()
         }
-        onMonitoringChange?()
+        onStateRefresh?()
     }
 
     func endFocus() {
@@ -44,7 +44,7 @@ final class MediaMonitor {
         isFocusing = false
         focusEndsAt = nil
         refreshState()
-        onMonitoringChange?()
+        onStateRefresh?()
     }
 
     var triggerMode: TriggerMode = {
@@ -53,7 +53,7 @@ final class MediaMonitor {
         didSet {
             UserDefaults.standard.set(triggerMode.rawValue, forKey: DefaultsKey.triggerMode)
             refreshState()
-            onMonitoringChange?()
+            onStateRefresh?()
         }
     }
 
@@ -201,14 +201,14 @@ final class MediaMonitor {
         guard isCameraActive != active else { return }
         isCameraActive = active
         refreshState()
-        onMonitoringChange?()
+        onStateRefresh?()
     }
 
     private func setMicActive(_ active: Bool) {
         guard isMicActive != active else { return }
         isMicActive = active
         refreshState()
-        onMonitoringChange?()
+        onStateRefresh?()
     }
 
     private func refreshState() {
