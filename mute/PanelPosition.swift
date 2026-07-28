@@ -15,6 +15,12 @@ enum PanelPosition: String {
     /// Width of the compact floating panel (the notch layout is much wider).
     static let floatingWidth: CGFloat = 280
 
+    /// Width of the wide notch layout that flows out from under the menu bar.
+    static let notchWidth: CGFloat = 644
+
+    /// Height of the notch layout's main content area, below the header row.
+    static let notchBodyHeight: CGFloat = 88
+
     /// Header height used by the notch layout on displays without a physical notch,
     /// so it still renders its indicator row instead of collapsing to nothing.
     static let fallbackNotchHeight: CGFloat = 32

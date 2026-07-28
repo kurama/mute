@@ -48,7 +48,7 @@ struct NotchPanelView: View {
 
             mainView
         }
-        .frame(width: 644, height: 88 + notchHeight)
+        .frame(width: PanelPosition.notchWidth, height: PanelPosition.notchBodyHeight + notchHeight)
         .background(.black)
     }
 
@@ -86,7 +86,7 @@ struct NotchPanelView: View {
             buttonsSection
         }
         .padding(.horizontal, edgePadding)
-        .frame(height: 88)
+        .frame(height: PanelPosition.notchBodyHeight)
     }
 
     private var micWingView: some View {
