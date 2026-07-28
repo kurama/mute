@@ -11,4 +11,5 @@ enum DefaultsKey {
     static let panelDismissOnOutsideClick = "panelDismissOnOutsideClick"
     static let panelPosition = "panelPosition"
     static let panelFloatingOrigin = "panelFloatingOrigin"
+    static let dndOwnedByApp = "dndOwnedByApp"
 }
