@@ -66,7 +66,10 @@ struct PanelView: View {
             }
         }
         .padding(18)
-        .frame(width: PanelPosition.floatingWidth, alignment: .leading)
+        // Grow past the base width when both action buttons are present so they
+        // never get squeezed; stays compact (and left-aligned) otherwise.
+        .frame(minWidth: PanelPosition.floatingWidth, alignment: .leading)
+        .fixedSize(horizontal: true, vertical: false)
     }
 
     private var settingsButton: some View {
@@ -219,6 +222,8 @@ struct PillButton: View {
             Text(title)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white)
+                .lineLimit(1)
+                .fixedSize()
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(style == .positive ? Color.muteBlue : Color.white.opacity(0.1))
