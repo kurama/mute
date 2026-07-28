@@ -31,7 +31,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
               let img = NSImage(contentsOf: url) else { return }
         let size = NSSize(width: 16, height: 16)
         if isActive {
-            button.image = img.filled(with: NSColor(red: 42/255, green: 90/255, blue: 210/255, alpha: 1), size: size)
+            button.image = img.filled(with: .muteBlue, size: size)
         } else {
             img.isTemplate = true
             img.size = size

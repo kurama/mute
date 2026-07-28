@@ -21,7 +21,7 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
-        window.backgroundColor = NSColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1)
+        window.backgroundColor = .muteBackground
         window.setContentSize(NSSize(width: 580, height: 460))
         window.minSize = NSSize(width: 580, height: 460)
         window.maxSize = NSSize(width: 580, height: 460)
