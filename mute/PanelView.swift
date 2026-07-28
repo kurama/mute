@@ -32,10 +32,10 @@ struct PanelView: View {
     private var headerRow: some View {
         HStack(spacing: 8) {
             if viewModel.triggerMode != .cameraOnly {
-                wingView(icon: "mic", label: "Mic", isActive: viewModel.isMicActive, showWaveform: true)
+                wingView(icon: "mic", label: "Mic", accessibilityName: "Microphone", isActive: viewModel.isMicActive, showWaveform: true)
             }
             if viewModel.triggerMode != .micOnly {
-                wingView(icon: "camera", label: "Cam", isActive: viewModel.isCameraActive, showWaveform: false)
+                wingView(icon: "camera", label: "Cam", accessibilityName: "Camera", isActive: viewModel.isCameraActive, showWaveform: false)
             }
             Spacer()
             settingsButton
@@ -81,6 +81,7 @@ struct PanelView: View {
                 .padding(.vertical, 5)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Settings")
     }
 
     // MARK: - Main view
@@ -95,7 +96,7 @@ struct PanelView: View {
         .frame(height: PanelPosition.notchBodyHeight)
     }
 
-    private func wingView(icon: String, label: String, isActive: Bool, showWaveform: Bool) -> some View {
+    private func wingView(icon: String, label: String, accessibilityName: String, isActive: Bool, showWaveform: Bool) -> some View {
         HStack(spacing: 6) {
             Image(systemName: isActive ? "\(icon).fill" : icon)
                 .font(.system(size: 11, weight: .medium))
@@ -113,6 +114,8 @@ struct PanelView: View {
         .background(isActive ? Color.muteBlue : Color.clear)
         .clipShape(Capsule())
         .animation(.spring(duration: 0.25), value: isActive)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(accessibilityName): \(isActive ? "in use" : "idle")")
     }
 
     private var dndStatusSection: some View {
@@ -137,6 +140,8 @@ struct PanelView: View {
                     .foregroundStyle(.white.opacity(0.35))
             }
         }
+        // Read the title and its status line as one element instead of two fragments.
+        .accessibilityElement(children: .combine)
     }
 
     private var buttonsSection: some View {
