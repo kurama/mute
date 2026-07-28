@@ -2,11 +2,11 @@ import AppKit
 
 final class StatusBarController: NSObject, NSMenuDelegate {
     private let barItem: NSStatusItem
-    private weak var notchPanel: NotchPanelWindow?
+    private weak var panel: PanelWindow?
     var onOpenSettings: (() -> Void)?
 
-    init(notchPanel: NotchPanelWindow) {
-        self.notchPanel = notchPanel
+    init(panel: PanelWindow) {
+        self.panel = panel
         barItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
         setIcon(isActive: false)
@@ -44,7 +44,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         // Left-click opens the panel (at the notch or floating, per the setting);
         // right-click shows the menu — like any other menu bar app.
         guard NSApp.currentEvent?.type == .rightMouseUp else {
-            notchPanel?.toggle()
+            panel?.toggle()
             return
         }
         let menu = buildMenu()

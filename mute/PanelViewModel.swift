@@ -3,7 +3,7 @@ import Foundation
 import Observation
 
 @Observable
-final class NotchPanelViewModel {
+final class PanelViewModel {
     var isMicActive = false
     var isCameraActive = false
     var isActive = false

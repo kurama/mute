@@ -1,13 +1,13 @@
 import AppKit
 import SwiftUI
 
-final class NotchPanelWindow: NSPanel, NSWindowDelegate {
-    private let viewModel: NotchPanelViewModel
+final class PanelWindow: NSPanel, NSWindowDelegate {
+    private let viewModel: PanelViewModel
     private var outsideClickMonitor: Any?
     /// Screen frame of the status bar icon, used to place the floating panel on first open.
     var statusItemFrameProvider: (() -> NSRect?)?
 
-    init(viewModel: NotchPanelViewModel, onToggle: @escaping () -> Void, onFocus: @escaping (TimeInterval) -> Void, onOpenSettings: @escaping () -> Void) {
+    init(viewModel: PanelViewModel, onToggle: @escaping () -> Void, onFocus: @escaping (TimeInterval) -> Void, onOpenSettings: @escaping () -> Void) {
         self.viewModel = viewModel
         let notchH = NSScreen.main?.effectiveNotchHeight ?? PanelPosition.fallbackNotchHeight
         let totalH = PanelPosition.notchBodyHeight + notchH
@@ -26,7 +26,7 @@ final class NotchPanelWindow: NSPanel, NSWindowDelegate {
         isMovable = false
 
         viewModel.notchHeight = notchH
-        let view = NotchPanelView(
+        let view = PanelView(
             viewModel: viewModel,
             onToggle: { [weak self] in onToggle(); self?.hide() },
             onFocus: { duration in onFocus(duration) },
