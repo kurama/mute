@@ -2,11 +2,13 @@ import AppKit
 import SwiftUI
 
 final class NotchPanelWindow: NSPanel, NSWindowDelegate {
+    private let viewModel: NotchPanelViewModel
     private var outsideClickMonitor: Any?
     /// Screen frame of the status bar icon, used to place the floating panel on first open.
     var statusItemFrameProvider: (() -> NSRect?)?
 
     init(viewModel: NotchPanelViewModel, onToggle: @escaping () -> Void, onFocus: @escaping (TimeInterval) -> Void, onOpenSettings: @escaping () -> Void) {
+        self.viewModel = viewModel
         let notchH = NSScreen.main?.effectiveNotchHeight ?? PanelPosition.fallbackNotchHeight
         let totalH = PanelPosition.notchBodyHeight + notchH
 
@@ -23,9 +25,9 @@ final class NotchPanelWindow: NSPanel, NSWindowDelegate {
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         isMovable = false
 
+        viewModel.notchHeight = notchH
         let view = NotchPanelView(
             viewModel: viewModel,
-            notchHeight: notchH,
             onToggle: { [weak self] in onToggle(); self?.hide() },
             onFocus: { duration in onFocus(duration) },
             onOpenSettings: { [weak self] in onOpenSettings(); self?.hide() }
@@ -78,7 +80,10 @@ final class NotchPanelWindow: NSPanel, NSWindowDelegate {
 
     private func positionAtNotch(on screen: NSScreen) {
         let w = PanelPosition.notchWidth
-        let h = PanelPosition.notchBodyHeight + screen.effectiveNotchHeight
+        // Follow the notch of the screen we're actually landing on, which may differ
+        // from the one the window was built on.
+        viewModel.notchHeight = screen.effectiveNotchHeight
+        let h = PanelPosition.notchBodyHeight + viewModel.notchHeight
         contentView?.setFrameSize(NSSize(width: w, height: h))
         let x = screen.frame.midX - w / 2
         // Always hang from the very top edge; on notch-less displays this simulates

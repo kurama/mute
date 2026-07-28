@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import Observation
 
@@ -9,6 +10,10 @@ final class NotchPanelViewModel {
     var isMonitoringEnabled = true
     var isFocusing = false
     var triggerMode: TriggerMode = .micAndCamera
+    /// Notch height of the screen the panel is currently shown on. Updated on every
+    /// open so the notch layout follows the display it lands on (which may differ
+    /// from the one the window was built on).
+    var notchHeight: CGFloat = PanelPosition.fallbackNotchHeight
     private(set) var activeSince: Date?
     private(set) var focusEndsAt: Date?
 

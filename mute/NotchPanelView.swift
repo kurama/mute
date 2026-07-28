@@ -2,7 +2,6 @@ import SwiftUI
 
 struct NotchPanelView: View {
     var viewModel: NotchPanelViewModel
-    var notchHeight: CGFloat = 0
     var onToggle: () -> Void
     var onFocus: (TimeInterval) -> Void
     var onOpenSettings: () -> Void
@@ -44,11 +43,11 @@ struct NotchPanelView: View {
         VStack(spacing: 0) {
             headerRow
                 .padding(.horizontal, edgePadding)
-                .frame(height: notchHeight)
+                .frame(height: viewModel.notchHeight)
 
             mainView
         }
-        .frame(width: PanelPosition.notchWidth, height: PanelPosition.notchBodyHeight + notchHeight)
+        .frame(width: PanelPosition.notchWidth, height: PanelPosition.notchBodyHeight + viewModel.notchHeight)
         .background(.black)
     }
 
