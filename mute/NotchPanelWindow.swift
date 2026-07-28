@@ -8,7 +8,7 @@ final class NotchPanelWindow: NSPanel, NSWindowDelegate {
 
     init(viewModel: NotchPanelViewModel, onToggle: @escaping () -> Void, onFocus: @escaping (TimeInterval) -> Void, onOpenSettings: @escaping () -> Void) {
         let notchH = NSScreen.main?.effectiveNotchHeight ?? PanelPosition.fallbackNotchHeight
-        let totalH: CGFloat = 88 + notchH
+        let totalH = PanelPosition.notchBodyHeight + notchH
 
         super.init(
             contentRect: .zero,
@@ -33,7 +33,7 @@ final class NotchPanelWindow: NSPanel, NSWindowDelegate {
         .environment(\.colorScheme, .dark)
 
         let host = NSHostingView(rootView: view)
-        host.frame = NSRect(x: 0, y: 0, width: 644, height: totalH)
+        host.frame = NSRect(x: 0, y: 0, width: PanelPosition.notchWidth, height: totalH)
         contentView = host
         delegate = self
     }
@@ -77,8 +77,8 @@ final class NotchPanelWindow: NSPanel, NSWindowDelegate {
     }
 
     private func positionAtNotch(on screen: NSScreen) {
-        let w: CGFloat = 644
-        let h = 88 + screen.effectiveNotchHeight
+        let w = PanelPosition.notchWidth
+        let h = PanelPosition.notchBodyHeight + screen.effectiveNotchHeight
         contentView?.setFrameSize(NSSize(width: w, height: h))
         let x = screen.frame.midX - w / 2
         // Always hang from the very top edge; on notch-less displays this simulates
