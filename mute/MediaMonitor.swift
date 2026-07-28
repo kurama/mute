@@ -6,6 +6,16 @@ enum TriggerMode: String {
     case micAndCamera = "both"
     case micOnly = "mic"
     case cameraOnly = "camera"
+
+    /// Whether the current mic/camera activity should trigger Do Not Disturb under
+    /// this mode. Pure and side-effect free so it can be unit tested on its own.
+    func isTriggered(mic: Bool, camera: Bool) -> Bool {
+        switch self {
+        case .micAndCamera: return mic || camera
+        case .micOnly:      return mic
+        case .cameraOnly:   return camera
+        }
+    }
 }
 
 final class MediaMonitor {
@@ -257,12 +267,7 @@ final class MediaMonitor {
 
     private func refreshState() {
         guard !isFocusing else { return }
-        let triggered: Bool
-        switch triggerMode {
-        case .micAndCamera: triggered = isMicActive || isCameraActive
-        case .micOnly:      triggered = isMicActive
-        case .cameraOnly:   triggered = isCameraActive
-        }
+        let triggered = triggerMode.isTriggered(mic: isMicActive, camera: isCameraActive)
         let newActive = isMonitoringEnabled && triggered
         guard newActive != isActive else { return }
         isActive = newActive
