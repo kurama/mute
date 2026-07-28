@@ -43,7 +43,7 @@ final class PanelWindow: NSPanel, NSWindowDelegate {
     func toggle() { isVisible ? hide() : show() }
 
     func show() {
-        guard let screen = NSScreen.main else { return }
+        guard let screen = targetScreen() else { return }
         let position = PanelPosition.current
         // Only the free-floating panel is draggable and casts a shadow;
         // the notch panel is pinned flush against the top edge.
@@ -76,6 +76,19 @@ final class PanelWindow: NSPanel, NSWindowDelegate {
         }, completionHandler: { [weak self] in
             self?.orderOut(nil)
         })
+    }
+
+    /// The screen the panel should open on: the one holding the status bar icon, so
+    /// it appears on the display the user clicked (notch anchoring included). Falls
+    /// back to the main screen — and finally any screen — if the icon can't be found.
+    private func targetScreen() -> NSScreen? {
+        if let frame = statusItemFrameProvider?() {
+            let anchor = CGPoint(x: frame.midX, y: frame.midY)
+            if let match = NSScreen.screens.first(where: { $0.frame.contains(anchor) }) {
+                return match
+            }
+        }
+        return NSScreen.main ?? NSScreen.screens.first
     }
 
     private func positionAtNotch(on screen: NSScreen) {
