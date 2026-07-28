@@ -93,9 +93,11 @@ final class PanelWindow: NSPanel, NSWindowDelegate {
     }
 
     private func positionFloating(on screen: NSScreen) {
-        let w = PanelPosition.floatingWidth
-        // The compact layout has an intrinsic height; let SwiftUI size it.
-        let h = max(contentView?.fittingSize.height ?? 0, 120)
+        // The compact layout sizes itself to its content (at least floatingWidth),
+        // so read both dimensions from SwiftUI rather than pinning the width.
+        let fitting = contentView?.fittingSize ?? .zero
+        let w = max(PanelPosition.floatingWidth, fitting.width)
+        let h = max(fitting.height, 120)
         contentView?.setFrameSize(NSSize(width: w, height: h))
 
         let margin: CGFloat = 8
