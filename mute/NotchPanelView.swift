@@ -153,7 +153,7 @@ struct NotchPanelView: View {
 
     private var focusMenu: some View {
         Menu {
-            Button("Focus for \(defaultFocusLabel)") { onFocus(TimeInterval(defaultFocusMinutes * 60)) }
+            Button("Focus for \(defaultFocusMinutes.focusDurationLabel)") { onFocus(TimeInterval(defaultFocusMinutes * 60)) }
             Divider()
             Button("5 min")   { onFocus(5 * 60) }
             Button("15 min")  { onFocus(15 * 60) }
@@ -170,13 +170,6 @@ struct NotchPanelView: View {
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
-    }
-
-    private var defaultFocusLabel: String {
-        let m = defaultFocusMinutes
-        if m < 60 { return "\(m) min" }
-        let hours = m / 60, mins = m % 60
-        return mins == 0 ? "\(hours)h" : "\(hours)h \(mins)m"
     }
 
 }
