@@ -10,14 +10,30 @@
 		DD00000000000000000000A3 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = DD00000000000000000000A2 /* KeyboardShortcuts */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		A8E1AF90000000000000000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A8E1AF632FFEEC0B00801F3B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A8E1AF6A2FFEEC0B00801F3B;
+			remoteInfo = mute;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		A8E1AF6B2FFEEC0B00801F3B /* Mute.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mute.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A8E1AF900000000000000002 /* muteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = muteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A8E1AF6D2FFEEC0B00801F3B /* mute */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = mute;
+			sourceTree = "<group>";
+		};
+		A8E1AF900000000000000003 /* muteTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = muteTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -31,6 +47,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A8E1AF900000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -38,6 +61,7 @@
 			isa = PBXGroup;
 			children = (
 				A8E1AF6D2FFEEC0B00801F3B /* mute */,
+				A8E1AF900000000000000003 /* muteTests */,
 				A8E1AF6C2FFEEC0B00801F3B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -46,6 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				A8E1AF6B2FFEEC0B00801F3B /* Mute.app */,
+				A8E1AF900000000000000002 /* muteTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -76,6 +101,29 @@
 			productReference = A8E1AF6B2FFEEC0B00801F3B /* Mute.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A8E1AF900000000000000001 /* muteTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A8E1AF900000000000000007 /* Build configuration list for PBXNativeTarget "muteTests" */;
+			buildPhases = (
+				A8E1AF900000000000000004 /* Sources */,
+				A8E1AF900000000000000005 /* Frameworks */,
+				A8E1AF900000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A8E1AF90000000000000000A /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A8E1AF900000000000000003 /* muteTests */,
+			);
+			name = muteTests;
+			packageProductDependencies = (
+			);
+			productName = muteTests;
+			productReference = A8E1AF900000000000000002 /* muteTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -88,6 +136,10 @@
 				TargetAttributes = {
 					A8E1AF6A2FFEEC0B00801F3B = {
 						CreatedOnToolsVersion = 26.6;
+					};
+					A8E1AF900000000000000001 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = A8E1AF6A2FFEEC0B00801F3B;
 					};
 				};
 			};
@@ -109,12 +161,20 @@
 			projectRoot = "";
 			targets = (
 				A8E1AF6A2FFEEC0B00801F3B /* mute */,
+				A8E1AF900000000000000001 /* muteTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A8E1AF692FFEEC0B00801F3B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A8E1AF900000000000000006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -131,7 +191,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A8E1AF900000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A8E1AF90000000000000000A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A8E1AF6A2FFEEC0B00801F3B /* mute */;
+			targetProxy = A8E1AF90000000000000000B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A8E1AF742FFEEC0C00801F3B /* Debug */ = {
@@ -336,6 +411,40 @@
 			};
 			name = Release;
 		};
+		A8E1AF900000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = LHJ9S8C3G8;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				PRODUCT_BUNDLE_IDENTIFIER = kurama.muteTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Mute.app/Contents/MacOS/Mute";
+			};
+			name = Debug;
+		};
+		A8E1AF900000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = LHJ9S8C3G8;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				PRODUCT_BUNDLE_IDENTIFIER = kurama.muteTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Mute.app/Contents/MacOS/Mute";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -353,6 +462,15 @@
 			buildConfigurations = (
 				A8E1AF772FFEEC0C00801F3B /* Debug */,
 				A8E1AF782FFEEC0C00801F3B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A8E1AF900000000000000007 /* Build configuration list for PBXNativeTarget "muteTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A8E1AF900000000000000008 /* Debug */,
+				A8E1AF900000000000000009 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
