@@ -23,10 +23,12 @@ struct SettingsView: View {
 
     let onTriggerModeChange: (TriggerMode) -> Void
     let onReplayOnboarding: () -> Void
+    let onReinstallAutomation: () -> Void
 
     @State private var tab: SettingsTab = .general
     @State private var mode: TriggerMode
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var automationMissing = false
     @AppStorage(DefaultsKey.soundFeedbackEnabled) private var soundFeedbackEnabled = true
     @AppStorage(DefaultsKey.defaultFocusMinutes) private var defaultFocusMinutes = 30
     @AppStorage(DefaultsKey.panelDismissOnOutsideClick) private var panelDismissOnOutsideClick = true
@@ -35,12 +37,16 @@ struct SettingsView: View {
     init(
         initialTriggerMode: TriggerMode,
         onTriggerModeChange: @escaping (TriggerMode) -> Void,
-        onReplayOnboarding: @escaping () -> Void
+        onReplayOnboarding: @escaping () -> Void,
+        onReinstallAutomation: @escaping () -> Void
     ) {
         self.onTriggerModeChange = onTriggerModeChange
         self.onReplayOnboarding = onReplayOnboarding
+        self.onReinstallAutomation = onReinstallAutomation
         _mode = State(initialValue: initialTriggerMode)
     }
+
+    private var cameraAccessDenied: Bool { mode != .micOnly && SetupHealth.cameraAccessDenied }
 
     var body: some View {
         ZStack {
@@ -99,6 +105,22 @@ struct SettingsView: View {
 
     private var generalPane: some View {
         VStack(spacing: 10) {
+            if automationMissing {
+                warningCard(
+                    title: "Automation not set up",
+                    subtitle: "Mute can't toggle Do Not Disturb until the “Mute On/Off” shortcuts are installed.",
+                    action: "Install",
+                    perform: onReinstallAutomation
+                )
+            }
+            if cameraAccessDenied {
+                warningCard(
+                    title: "Camera access denied",
+                    subtitle: "Mute can't detect camera use. Grant access in System Settings.",
+                    action: "Open Settings",
+                    perform: SetupHealth.openCameraPrivacySettings
+                )
+            }
             card {
                 row(title: "Launch at login", subtitle: "Start Mute automatically when you log in") {
                     Toggle("", isOn: $launchAtLogin)
@@ -143,7 +165,10 @@ struct SettingsView: View {
                 }
             }
         }
-        .onAppear { launchAtLogin = SMAppService.mainApp.status == .enabled }
+        .onAppear {
+            launchAtLogin = SMAppService.mainApp.status == .enabled
+            SetupHealth.detectAutomationShortcuts { automationMissing = !$0 }
+        }
     }
 
     private var triggerPane: some View {
@@ -266,6 +291,36 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.white.opacity(0.05))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func warningCard(title: String, subtitle: String, action: String, perform: @escaping () -> Void) -> some View {
+        card {
+            HStack(spacing: 12) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.white)
+                    Text(subtitle)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 12)
+                Button(action: perform) {
+                    Text(action)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Color.muteBlue)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 
     private func row<Control: View>(
