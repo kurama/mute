@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct NotchPanelView: View {
-    var viewModel: NotchPanelViewModel
+struct PanelView: View {
+    var viewModel: PanelViewModel
     var onToggle: () -> Void
     var onFocus: (TimeInterval) -> Void
     var onOpenSettings: () -> Void

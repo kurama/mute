@@ -7,8 +7,8 @@ final class MuteApp: NSObject, NSApplicationDelegate {
     private var mediaMonitor: MediaMonitor?
     private var focusController: FocusController?
     private var onboardingController: OnboardingWindowController?
-    private var notchPanel: NotchPanelWindow?
-    private var notchPanelVM: NotchPanelViewModel?
+    private var panel: PanelWindow?
+    private var panelVM: PanelViewModel?
     private var settingsWindow: SettingsWindowController?
 
     static func main() {
@@ -43,8 +43,8 @@ final class MuteApp: NSObject, NSApplicationDelegate {
 
         let fc = FocusController()
         let mm = MediaMonitor()
-        let vm = NotchPanelViewModel()
-        let panel = NotchPanelWindow(
+        let vm = PanelViewModel()
+        let panel = PanelWindow(
             viewModel: vm,
             onToggle: { [weak mm, weak fc] in
                 guard let mm else { return }
@@ -58,15 +58,15 @@ final class MuteApp: NSObject, NSApplicationDelegate {
             onFocus: { [weak mm] duration in mm?.startFocus(for: duration) },
             onOpenSettings: { [weak self] in self?.openSettings() }
         )
-        let sb = StatusBarController(notchPanel: panel)
+        let sb = StatusBarController(panel: panel)
         sb.onOpenSettings = { [weak self] in self?.openSettings() }
         panel.statusItemFrameProvider = { [weak sb] in sb?.statusItemScreenFrame }
 
         focusController = fc
         mediaMonitor = mm
         statusBarController = sb
-        notchPanel = panel
-        notchPanelVM = vm
+        self.panel = panel
+        panelVM = vm
 
         fc.setup()
 
