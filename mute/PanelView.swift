@@ -254,7 +254,3 @@ struct WingWaveformView: View {
         .onAppear { animating = true }
     }
 }
-
-extension Color {
-    static let muteBlue = Color(red: 42/255, green: 90/255, blue: 210/255)
-}

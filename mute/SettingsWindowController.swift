@@ -20,7 +20,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
-        window.backgroundColor = NSColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1)
+        window.backgroundColor = .muteBackground
         window.appearance = NSAppearance(named: .darkAqua)
         window.setContentSize(SettingsView.windowSize)
         window.center()

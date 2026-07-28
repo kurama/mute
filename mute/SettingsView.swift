@@ -44,7 +44,7 @@ struct SettingsView: View {
 
     var body: some View {
         ZStack {
-            Color(red: 0.06, green: 0.06, blue: 0.06).ignoresSafeArea()
+            Color.muteBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 tabBar
