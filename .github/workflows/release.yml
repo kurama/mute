@@ -26,6 +26,9 @@ jobs:
   appstore:
     name: App Store
     runs-on: macos-latest
+    # Safety net: signing/upload normally takes ~2 min. If a step ever blocks on a
+    # keychain prompt again, fail fast instead of running until the 6h hard limit.
+    timeout-minutes: 20
     if: github.event_name == 'push' || inputs.include_appstore
     steps:
       - uses: actions/checkout@v4
@@ -43,12 +46,18 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security set-keychain-settings -t 3600 -u build.keychain
 
-          # Import distribution certificate
+          # Import distribution certificates. The .p12 holds both the application
+          # (Apple Distribution) and installer (Mac Installer Distribution) identities.
+          # Whitelist every signing tool that touches them — codesign signs the app,
+          # productbuild/productsign sign the App Store .pkg — otherwise pkg signing
+          # blocks on an unanswerable keychain prompt in headless CI.
           echo "$CERTIFICATE_P12" | base64 --decode > certificate.p12
           security import certificate.p12 \
             -k build.keychain \
             -P "$CERTIFICATE_PASSWORD" \
-            -T /usr/bin/codesign
+            -T /usr/bin/codesign \
+            -T /usr/bin/productbuild \
+            -T /usr/bin/productsign
           security set-key-partition-list \
             -S apple-tool:,apple: -s \
             -k "$KEYCHAIN_PASSWORD" build.keychain
