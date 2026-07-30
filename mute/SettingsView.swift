@@ -229,7 +229,7 @@ struct SettingsView: View {
                 }
             }
             card {
-                row(title: "Enable / disable Mute", subtitle: "Turn mic & camera detection on or off") {
+                row(title: "Turn Mute on / off", subtitle: "Turn mic & camera detection on or off") {
                     KeyboardShortcuts.Recorder("", name: .toggleMonitoring)
                 }
             }
