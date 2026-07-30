@@ -8,6 +8,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     var onToggle: (() -> Void)?
     var onFocus: ((TimeInterval) -> Void)?
 
+    // The state line in the "menu" mode menu, refreshed by a ticker while the menu is
+    // open so the DND / Focus timer counts up live instead of freezing at open time.
+    private weak var menuStatusItem: NSMenuItem?
+    private var menuTicker: Timer?
+
     init(panel: PanelWindow, viewModel: PanelViewModel) {
         self.panel = panel
         self.viewModel = viewModel
@@ -72,8 +77,24 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         barItem.button?.performClick(nil)
     }
 
+    func menuWillOpen(_ menu: NSMenu) {
+        // Only the action menu carries a live state line; the app (right-click) menu
+        // doesn't, so leave it alone.
+        guard let status = menuStatusItem, menu.items.first === status else { return }
+        menuTicker?.invalidate()
+        let ticker = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            self.menuStatusItem?.title = self.statusLine
+        }
+        // .common so it keeps firing while the menu-tracking run loop is up.
+        RunLoop.main.add(ticker, forMode: .common)
+        menuTicker = ticker
+    }
+
     func menuDidClose(_ menu: NSMenu) {
         barItem.menu = nil
+        menuTicker?.invalidate()
+        menuTicker = nil
     }
 
     /// The full menu shown in "menu" mode: current state, the same actions the panel
@@ -84,12 +105,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let status = NSMenuItem(title: statusLine, action: nil, keyEquivalent: "")
         status.isEnabled = false
         menu.addItem(status)
+        menuStatusItem = status
         menu.addItem(.separator())
 
         if viewModel.isFocusing {
             addItem(to: menu, title: "End Focus", action: #selector(toggle))
         } else if viewModel.isMonitoringEnabled {
-            addItem(to: menu, title: "Disable Mute", action: #selector(toggle))
+            // Mirror the panel: "Disable" is only offered while DND is actually on.
+            if viewModel.isActive {
+                addItem(to: menu, title: "Disable Mute", action: #selector(toggle))
+            }
             menu.addItem(focusMenuItem())
         } else {
             addItem(to: menu, title: "Enable Mute", action: #selector(toggle))
