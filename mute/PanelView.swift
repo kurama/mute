@@ -31,11 +31,14 @@ struct PanelView: View {
     // Shared by both layouts.
     private var headerRow: some View {
         HStack(spacing: 8) {
+            // When monitoring is off Mute reacts to nothing, so the indicators stay
+            // idle even if the mic/camera are physically in use — a lit ring would
+            // imply Mute is about to act when it won't.
             if viewModel.triggerMode != .cameraOnly {
-                wingView(icon: "mic", label: "Mic", accessibilityName: "Microphone", isActive: viewModel.isMicActive, showWaveform: true)
+                wingView(icon: "mic", label: "Mic", accessibilityName: "Microphone", isActive: viewModel.isMonitoringEnabled && viewModel.isMicActive, showWaveform: true)
             }
             if viewModel.triggerMode != .micOnly {
-                wingView(icon: "camera", label: "Cam", accessibilityName: "Camera", isActive: viewModel.isCameraActive, showWaveform: false)
+                wingView(icon: "camera", label: "Cam", accessibilityName: "Camera", isActive: viewModel.isMonitoringEnabled && viewModel.isCameraActive, showWaveform: false)
             }
             Spacer()
             settingsButton
