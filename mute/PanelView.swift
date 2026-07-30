@@ -150,11 +150,12 @@ struct PanelView: View {
                 PillButton(title: "End Focus", style: .positive) { onToggle() }
             } else if viewModel.isMonitoringEnabled {
                 if viewModel.isActive {
-                    PillButton(title: "Disable", style: .neutral) { onToggle() }
+                    // Turns off Mute's auto-detection entirely, not just the current DND.
+                    PillButton(title: "Turn Off Mute", style: .neutral) { onToggle() }
                 }
                 focusMenu
             } else {
-                PillButton(title: "Enable", style: .neutral) { onToggle() }
+                PillButton(title: "Turn On Mute", style: .neutral) { onToggle() }
             }
         }
     }

@@ -111,13 +111,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         if viewModel.isFocusing {
             addItem(to: menu, title: "End Focus", action: #selector(toggle))
         } else if viewModel.isMonitoringEnabled {
-            // Mirror the panel: "Disable" is only offered while DND is actually on.
+            // Mirror the panel: this is only offered while DND is actually on. It turns
+            // off Mute's detection entirely (not just the current DND), hence the label.
             if viewModel.isActive {
-                addItem(to: menu, title: "Disable Mute", action: #selector(toggle))
+                addItem(to: menu, title: "Turn Off Mute", action: #selector(toggle))
             }
             menu.addItem(focusMenuItem())
         } else {
-            addItem(to: menu, title: "Enable Mute", action: #selector(toggle))
+            addItem(to: menu, title: "Turn On Mute", action: #selector(toggle))
         }
 
         menu.addItem(.separator())
