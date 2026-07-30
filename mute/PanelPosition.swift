@@ -1,15 +1,17 @@
 import Foundation
 
-/// Where the panel appears when opened. `notch` merges it into the display notch
-/// (default); `floating` is a compact, movable panel — it first appears under the
-/// status bar icon but can be dragged anywhere, for people who already run another
-/// notch app.
+/// What clicking the menu bar icon does. `menu` (default) opens a plain native menu
+/// with no panel — the lightweight, classic menu bar app experience. `notch` merges
+/// a panel into the display notch; `floating` is a compact, movable panel that first
+/// appears under the status bar icon but can be dragged anywhere, for people who
+/// already run another notch app.
 enum PanelPosition: String {
+    case menu
     case notch
     case floating
 
     static var current: PanelPosition {
-        PanelPosition(rawValue: UserDefaults.standard.string(forKey: DefaultsKey.panelPosition) ?? "") ?? .notch
+        PanelPosition(rawValue: UserDefaults.standard.string(forKey: DefaultsKey.panelPosition) ?? "") ?? .menu
     }
 
     /// Width of the compact floating panel (the notch layout is much wider).

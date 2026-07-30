@@ -4,12 +4,13 @@ import XCTest
 final class PanelPositionTests: XCTestCase {
 
     func testRawValueParsing() {
+        XCTAssertEqual(PanelPosition(rawValue: "menu"), .menu)
         XCTAssertEqual(PanelPosition(rawValue: "notch"), .notch)
         XCTAssertEqual(PanelPosition(rawValue: "floating"), .floating)
         XCTAssertNil(PanelPosition(rawValue: "bogus"))
     }
 
-    func testCurrentReadsDefaultsAndFallsBackToNotch() {
+    func testCurrentReadsDefaultsAndFallsBackToMenu() {
         let key = DefaultsKey.panelPosition
         let original = UserDefaults.standard.string(forKey: key)
         defer {
@@ -24,9 +25,9 @@ final class PanelPositionTests: XCTestCase {
         XCTAssertEqual(PanelPosition.current, .floating)
 
         UserDefaults.standard.set("garbage", forKey: key)
-        XCTAssertEqual(PanelPosition.current, .notch)
+        XCTAssertEqual(PanelPosition.current, .menu)
 
         UserDefaults.standard.removeObject(forKey: key)
-        XCTAssertEqual(PanelPosition.current, .notch)
+        XCTAssertEqual(PanelPosition.current, .menu)
     }
 }

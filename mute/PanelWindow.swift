@@ -43,8 +43,9 @@ final class PanelWindow: NSPanel, NSWindowDelegate {
     func toggle() { isVisible ? hide() : show() }
 
     func show() {
-        guard let screen = targetScreen() else { return }
         let position = PanelPosition.current
+        // In "menu" mode there is no panel — the status bar icon shows a menu instead.
+        guard position != .menu, let screen = targetScreen() else { return }
         // Only the free-floating panel is draggable and casts a shadow;
         // the notch panel is pinned flush against the top edge.
         isMovable = position == .floating
@@ -53,6 +54,7 @@ final class PanelWindow: NSPanel, NSWindowDelegate {
         switch position {
         case .notch: positionAtNotch(on: screen)
         case .floating: positionFloating(on: screen)
+        case .menu: return
         }
         alphaValue = 0
         orderFront(nil)

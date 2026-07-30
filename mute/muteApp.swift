@@ -23,7 +23,7 @@ final class MuteApp: NSObject, NSApplicationDelegate {
             DefaultsKey.soundFeedbackEnabled: true,
             DefaultsKey.defaultFocusMinutes: 30,
             DefaultsKey.panelDismissOnOutsideClick: true,
-            DefaultsKey.panelPosition: PanelPosition.notch.rawValue,
+            DefaultsKey.panelPosition: PanelPosition.menu.rawValue,
         ])
 
         if UserDefaults.standard.bool(forKey: DefaultsKey.onboardingCompleted) {
@@ -44,22 +44,29 @@ final class MuteApp: NSObject, NSApplicationDelegate {
         let fc = FocusController()
         let mm = MediaMonitor()
         let vm = PanelViewModel()
+
+        // Shared by both the panel and the "menu" mode's menu items.
+        let toggle: () -> Void = { [weak mm, weak fc] in
+            guard let mm else { return }
+            if mm.isFocusing {
+                mm.endFocus()
+            } else {
+                mm.isMonitoringEnabled.toggle()
+                if !mm.isMonitoringEnabled { fc?.disable() }
+            }
+        }
+        let focus: (TimeInterval) -> Void = { [weak mm] duration in mm?.startFocus(for: duration) }
+
         let panel = PanelWindow(
             viewModel: vm,
-            onToggle: { [weak mm, weak fc] in
-                guard let mm else { return }
-                if mm.isFocusing {
-                    mm.endFocus()
-                } else {
-                    mm.isMonitoringEnabled.toggle()
-                    if !mm.isMonitoringEnabled { fc?.disable() }
-                }
-            },
-            onFocus: { [weak mm] duration in mm?.startFocus(for: duration) },
+            onToggle: toggle,
+            onFocus: focus,
             onOpenSettings: { [weak self] in self?.openSettings() }
         )
-        let sb = StatusBarController(panel: panel)
+        let sb = StatusBarController(panel: panel, viewModel: vm)
         sb.onOpenSettings = { [weak self] in self?.openSettings() }
+        sb.onToggle = toggle
+        sb.onFocus = focus
         panel.statusItemFrameProvider = { [weak sb] in sb?.statusItemScreenFrame }
 
         focusController = fc
@@ -85,7 +92,7 @@ final class MuteApp: NSObject, NSApplicationDelegate {
 
         mm.start()
 
-        KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak panel] in panel?.toggle() }
+        KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak sb] in sb?.primaryAction() }
         KeyboardShortcuts.onKeyUp(for: .toggleMonitoring) { [weak mm, weak fc] in
             guard let mm else { return }
             mm.isMonitoringEnabled.toggle()

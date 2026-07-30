@@ -32,7 +32,7 @@ struct SettingsView: View {
     @AppStorage(DefaultsKey.soundFeedbackEnabled) private var soundFeedbackEnabled = true
     @AppStorage(DefaultsKey.defaultFocusMinutes) private var defaultFocusMinutes = 30
     @AppStorage(DefaultsKey.panelDismissOnOutsideClick) private var panelDismissOnOutsideClick = true
-    @AppStorage(DefaultsKey.panelPosition) private var panelPositionRaw = PanelPosition.notch.rawValue
+    @AppStorage(DefaultsKey.panelPosition) private var panelPositionRaw = PanelPosition.menu.rawValue
 
     init(
         initialTriggerMode: TriggerMode,
@@ -245,26 +245,31 @@ struct SettingsView: View {
         VStack(spacing: 10) {
             card {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Panel position")
+                    Text("When you click the menu bar icon")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white.opacity(0.55))
-                    Text("Use a floating panel if another app already lives in the notch")
+                    Text("Menu is the simplest — a plain menu, no panel. Use a floating panel if another app already lives in the notch.")
                         .font(.system(size: 12))
                         .foregroundStyle(.white.opacity(0.4))
+                        .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 8) {
+                        positionPill("Menu", .menu)
                         positionPill("Notch", .notch)
                         positionPill("Floating", .floating)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            card {
-                row(title: "Dismiss when clicking outside",
-                    subtitle: "Hide the panel automatically when you click elsewhere") {
-                    Toggle("", isOn: $panelDismissOnOutsideClick)
-                        .labelsHidden()
-                        .toggleStyle(.switch)
-                        .tint(Color.muteBlue)
+            // The dismiss-on-outside-click behavior only applies to the panels.
+            if PanelPosition(rawValue: panelPositionRaw) != .menu {
+                card {
+                    row(title: "Dismiss when clicking outside",
+                        subtitle: "Hide the panel automatically when you click elsewhere") {
+                        Toggle("", isOn: $panelDismissOnOutsideClick)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .tint(Color.muteBlue)
+                    }
                 }
             }
         }
