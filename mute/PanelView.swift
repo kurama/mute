@@ -7,7 +7,7 @@ struct PanelView: View {
     var onOpenSettings: () -> Void
 
     @AppStorage(DefaultsKey.defaultFocusMinutes) private var defaultFocusMinutes = 30
-    @AppStorage(DefaultsKey.panelPosition) private var panelPositionRaw = PanelPosition.notch.rawValue
+    @AppStorage(DefaultsKey.panelPosition) private var panelPositionRaw = PanelPosition.menu.rawValue
 
     private var isFloating: Bool { PanelPosition(rawValue: panelPositionRaw) == .floating }
 
