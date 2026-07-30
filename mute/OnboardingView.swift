@@ -18,6 +18,9 @@ struct OnboardingView: View {
                     } else if step == 1 {
                         ShortcutsStep(onNext: advance)
                             .transition(slideTransition)
+                    } else if step == 2 {
+                        AppearanceStep(onNext: advance)
+                            .transition(slideTransition)
                     } else {
                         FinishStep(onComplete: onComplete)
                             .transition(slideTransition)
@@ -27,7 +30,7 @@ struct OnboardingView: View {
                 .animation(.spring(response: 0.45, dampingFraction: 0.82), value: step)
 
                 HStack(spacing: 7) {
-                    ForEach(0..<3, id: \.self) { i in
+                    ForEach(0..<4, id: \.self) { i in
                         Capsule()
                             .fill(i == step ? Color.white : Color.white.opacity(0.18))
                             .frame(width: i == step ? 22 : 6, height: 6)
@@ -182,6 +185,82 @@ private struct ShortcutBadge: View {
                 .foregroundStyle(isInstalled ? .white : .white.opacity(0.42))
         }
         .animation(.spring(response: 0.3), value: isInstalled)
+    }
+}
+
+private struct AppearanceStep: View {
+    var onNext: () -> Void
+    @AppStorage(DefaultsKey.panelPosition) private var panelPositionRaw = PanelPosition.menu.rawValue
+
+    private struct Mode: Identifiable {
+        let position: PanelPosition
+        let title: String
+        let subtitle: String
+        var id: String { position.rawValue }
+    }
+
+    private let modes: [Mode] = [
+        Mode(position: .menu, title: "Menu", subtitle: "A simple drop-down menu. The lightest option — no panel."),
+        Mode(position: .notch, title: "Notch", subtitle: "A panel that flows out from the display notch."),
+        Mode(position: .floating, title: "Floating", subtitle: "A compact panel you can drag anywhere on screen."),
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("How should it appear?")
+                .font(.system(size: 44, weight: .bold))
+                .foregroundStyle(.white)
+                .padding(.bottom, 16)
+
+            Text("Choose how Mute opens when you click the\nmenu bar icon. You can change this in Settings.")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(.white.opacity(0.62))
+                .lineSpacing(5)
+                .padding(.bottom, 28)
+
+            VStack(spacing: 8) {
+                ForEach(modes) { mode in
+                    modeRow(mode)
+                }
+            }
+            .padding(.bottom, 28)
+
+            OnboardingButton(title: "Continue", action: onNext)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 60)
+    }
+
+    private func modeRow(_ mode: Mode) -> some View {
+        let isSelected = panelPositionRaw == mode.position.rawValue
+        return Button {
+            withAnimation(.spring(response: 0.3)) { panelPositionRaw = mode.position.rawValue }
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
+                    .font(.system(size: 18))
+                    .foregroundStyle(isSelected ? Color.muteBlue : .white.opacity(0.3))
+                    .contentTransition(.symbolEffect(.replace))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(mode.title)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white)
+                    Text(mode.subtitle)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.42))
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 11)
+            .background(Color.white.opacity(isSelected ? 0.08 : 0.04))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(isSelected ? Color.muteBlue.opacity(0.6) : .clear, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 }
 
