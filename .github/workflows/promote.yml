@@ -65,6 +65,8 @@ jobs:
             desc "Automatically enables Do Not Disturb when your mic or camera is active"
             homepage "https://github.com/kurama/mute"
 
+            depends_on macos: ">= :sonoma"
+
             app "Mute.app"
           end
           EOF
