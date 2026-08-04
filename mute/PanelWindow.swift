@@ -83,15 +83,32 @@ final class PanelWindow: NSPanel, NSWindowDelegate {
         // against the top edge.
         isMovable = position == .floating
         isMovableByWindowBackground = position == .floating
-        // No window shadow: on a borderless window it bleeds through the floating
-        // panel's translucent material and reads as a dark rim on the inner edge.
-        hasShadow = false
+        // Only the free-floating panel casts a shadow. The shadow also keeps the
+        // borderless window fully composited while dragging (without it, parts stop
+        // redrawing mid-drag).
+        hasShadow = position == .floating
         switch position {
         case .notch: positionAtNotch(on: screen)
         case .floating: positionFloating(on: screen)
         case .menu: return false
         }
+        applyRoundedClip(position == .floating)
         return true
+    }
+
+    // Round + border the floating panel at the content layer (a crisp compositor
+    // mask) rather than in SwiftUI. Combined with the window shadow this gives the
+    // rounded edge a hard boundary, so the shadow sits cleanly outside instead of
+    // bleeding through the material's soft edge as a rim. The notch layout keeps its
+    // own concave SwiftUI clip, so the layer mask is disabled there.
+    private func applyRoundedClip(_ enabled: Bool) {
+        contentView?.wantsLayer = true
+        guard let layer = contentView?.layer else { return }
+        layer.cornerCurve = .continuous
+        layer.cornerRadius = enabled ? 18 : 0
+        layer.masksToBounds = enabled
+        layer.borderWidth = enabled ? 1 : 0
+        layer.borderColor = enabled ? NSColor.white.withAlphaComponent(0.12).cgColor : nil
     }
 
     // A mode switch in Settings only re-renders the SwiftUI content; the AppKit

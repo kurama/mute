@@ -19,13 +19,11 @@ struct PanelView: View {
 
     var body: some View {
         if isFloating {
-            let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+            // Thin translucent material. Corners and border come from the content layer
+            // (PanelWindow.applyRoundedClip); the window shadow — kept for a glitch-free
+            // drag — shows a faint rim through the translucency, an accepted trade-off.
             floatingBody
-                // Opaque fill (not a translucent material) so the rounded edge stays
-                // crisp while dragging — a see-through edge loses coverage at the
-                // fractional window positions a drag produces.
-                .background(Color(white: 0.14), in: shape)
-                .overlay(shape.strokeBorder(.white.opacity(0.12), lineWidth: 1))
+                .background(.ultraThinMaterial)
         } else {
             notchBody.clipShape(NotchPanelShape(topCornerRadius: cornerRadius, bottomCornerRadius: cornerRadius))
         }
