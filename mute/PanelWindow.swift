@@ -4,6 +4,9 @@ import SwiftUI
 final class PanelWindow: NSPanel, NSWindowDelegate {
     private let viewModel: PanelViewModel
     private var outsideClickMonitor: Any?
+    /// The display mode the current window frame/chrome was laid out for, so a mode
+    /// change while the panel is open can be detected and re-applied.
+    private var appliedPosition: PanelPosition?
     /// Screen frame of the status bar icon, used to place the floating panel on first open.
     var statusItemFrameProvider: (() -> NSRect?)?
 
@@ -38,26 +41,25 @@ final class PanelWindow: NSPanel, NSWindowDelegate {
         host.frame = NSRect(x: 0, y: 0, width: PanelPosition.notchWidth, height: totalH)
         contentView = host
         delegate = self
+
+        // Re-lay-out live when the display mode is switched in Settings while the
+        // panel is open, instead of leaving it stuck in the previous mode's frame.
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(handleDefaultsChange),
+            name: UserDefaults.didChangeNotification, object: nil
+        )
     }
+
+    deinit { NotificationCenter.default.removeObserver(self) }
 
     func toggle() { isVisible ? hide() : show() }
 
     func show() {
-        let position = PanelPosition.current
         // In "menu" mode there is no panel — the status bar icon shows a menu instead.
-        guard position != .menu, let screen = targetScreen() else { return }
-        // Only the free-floating panel is draggable and casts a shadow;
-        // the notch panel is pinned flush against the top edge.
-        isMovable = position == .floating
-        isMovableByWindowBackground = position == .floating
-        hasShadow = position == .floating
-        switch position {
-        case .notch: positionAtNotch(on: screen)
-        case .floating: positionFloating(on: screen)
-        case .menu: return
-        }
+        guard applyLayout() else { return }
         alphaValue = 0
         orderFront(nil)
+        invalidateShadow()
         NSAnimationContext.runAnimationGroup {
             $0.duration = 0.18
             $0.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -67,6 +69,46 @@ final class PanelWindow: NSPanel, NSWindowDelegate {
             outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(
                 matching: [.leftMouseDown, .rightMouseDown]
             ) { [weak self] _ in self?.hide() }
+        }
+    }
+
+    /// Size, position and window chrome for the current display mode. Returns false
+    /// (no-op) in "menu" mode or when no screen is available. Safe to call again
+    /// while the panel is visible, e.g. when the mode is switched in Settings.
+    @discardableResult
+    private func applyLayout() -> Bool {
+        let position = PanelPosition.current
+        guard position != .menu, let screen = targetScreen() else { return false }
+        appliedPosition = position
+        // Only the free-floating panel is draggable and casts a shadow;
+        // the notch panel is pinned flush against the top edge.
+        isMovable = position == .floating
+        isMovableByWindowBackground = position == .floating
+        hasShadow = position == .floating
+        switch position {
+        case .notch: positionAtNotch(on: screen)
+        case .floating: positionFloating(on: screen)
+        case .menu: return false
+        }
+        // The window is built at notch size with an opaque black background, so its
+        // cached shadow can linger as a black rectangle behind the rounded, translucent
+        // floating panel — recompute it for the shape actually on screen.
+        invalidateShadow()
+        return true
+    }
+
+    // A mode switch in Settings only re-renders the SwiftUI content; the AppKit
+    // window keeps the old frame/chrome until we re-lay it out here.
+    @objc private func handleDefaultsChange() {
+        guard isVisible else { return }
+        let position = PanelPosition.current
+        guard position != appliedPosition else { return }
+        appliedPosition = position
+        if position == .menu { hide(); return }
+        // Defer so SwiftUI has re-rendered the new layout before we read its fitting size.
+        DispatchQueue.main.async { [weak self] in
+            self?.applyLayout()
+            self?.invalidateShadow()
         }
     }
 
