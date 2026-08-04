@@ -59,7 +59,6 @@ final class PanelWindow: NSPanel, NSWindowDelegate {
         guard applyLayout() else { return }
         alphaValue = 0
         orderFront(nil)
-        invalidateShadow()
         NSAnimationContext.runAnimationGroup {
             $0.duration = 0.18
             $0.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -80,20 +79,18 @@ final class PanelWindow: NSPanel, NSWindowDelegate {
         let position = PanelPosition.current
         guard position != .menu, let screen = targetScreen() else { return false }
         appliedPosition = position
-        // Only the free-floating panel is draggable and casts a shadow;
-        // the notch panel is pinned flush against the top edge.
+        // Only the free-floating panel is draggable; the notch panel is pinned flush
+        // against the top edge.
         isMovable = position == .floating
         isMovableByWindowBackground = position == .floating
-        hasShadow = position == .floating
+        // No window shadow: on a borderless window it bleeds through the floating
+        // panel's translucent material and reads as a dark rim on the inner edge.
+        hasShadow = false
         switch position {
         case .notch: positionAtNotch(on: screen)
         case .floating: positionFloating(on: screen)
         case .menu: return false
         }
-        // The window is built at notch size with an opaque black background, so its
-        // cached shadow can linger as a black rectangle behind the rounded, translucent
-        // floating panel — recompute it for the shape actually on screen.
-        invalidateShadow()
         return true
     }
 
@@ -108,7 +105,6 @@ final class PanelWindow: NSPanel, NSWindowDelegate {
         // Defer so SwiftUI has re-rendered the new layout before we read its fitting size.
         DispatchQueue.main.async { [weak self] in
             self?.applyLayout()
-            self?.invalidateShadow()
         }
     }
 
