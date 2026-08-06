@@ -43,6 +43,11 @@ enum SetupHealth {
     /// timeout. Falls back to a ~30s cap in case that focus signal is unavailable.
     static func waitForShortcutInstall(named name: String, timeout: TimeInterval = 30, pollInterval: TimeInterval = 0.5) -> Bool {
         var shortcutsWasFrontmost = false
+        var pollsSinceLostFocus = 0
+        // Give the import a few extra polls once Shortcuts loses focus — the
+        // shortcut may not be immediately visible to `shortcuts list` the instant
+        // the sheet closes, and treating that lag as a cancel would be a false negative.
+        let gracePollsAfterFocusLost = 4
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             Thread.sleep(forTimeInterval: pollInterval)
@@ -50,8 +55,10 @@ enum SetupHealth {
             let isShortcutsFrontmost = NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.shortcuts"
             if isShortcutsFrontmost {
                 shortcutsWasFrontmost = true
+                pollsSinceLostFocus = 0
             } else if shortcutsWasFrontmost {
-                break
+                pollsSinceLostFocus += 1
+                if pollsSinceLostFocus >= gracePollsAfterFocusLost { break }
             }
         }
         // Err on the side of "installed" only if the probe itself couldn't run at all —

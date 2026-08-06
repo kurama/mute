@@ -11,12 +11,16 @@ final class FocusController {
         didSet { UserDefaults.standard.set(enabledByUs, forKey: DefaultsKey.dndOwnedByApp) }
     }
     private static let queue = DispatchQueue(label: "kurama.mute.focus", qos: .userInitiated)
+    // Separate from `queue`: the install probe can block for up to ~30s per
+    // shortcut waiting on the user. It must never share a serial queue with
+    // run(_:) — that would delay DND toggling behind a still-running install.
+    private static let installQueue = DispatchQueue(label: "kurama.mute.focus.install", qos: .userInitiated)
     private static let installedDefaultsKey = DefaultsKey.shortcutsInstalled
 
     func setup() {
         reconcileStaleState()
         guard !UserDefaults.standard.bool(forKey: Self.installedDefaultsKey) else { return }
-        Self.queue.asyncAfter(deadline: .now() + 1) {
+        Self.installQueue.asyncAfter(deadline: .now() + 1) {
             Self.installShortcuts()
         }
     }
@@ -36,7 +40,7 @@ final class FocusController {
     /// `completion` is called on the main queue once both shortcuts have been
     /// verified (or the user gave up), so the caller can refresh its warning state.
     func reinstallShortcuts(completion: (() -> Void)? = nil) {
-        Self.queue.async {
+        Self.installQueue.async {
             Self.installShortcuts()
             if let completion { DispatchQueue.main.async(execute: completion) }
         }
