@@ -22,9 +22,10 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
         window.backgroundColor = .muteBackground
-        window.setContentSize(NSSize(width: 580, height: 460))
-        window.minSize = NSSize(width: 580, height: 460)
-        window.maxSize = NSSize(width: 580, height: 460)
+        let size = NSSize(width: OnboardingView.windowSize.width, height: OnboardingView.windowSize.height)
+        window.setContentSize(size)
+        window.minSize = size
+        window.maxSize = size
         window.center()
         window.isReleasedWhenClosed = false
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true

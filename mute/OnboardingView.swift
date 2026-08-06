@@ -40,8 +40,10 @@ struct OnboardingView: View {
                 .padding(.bottom, 32)
             }
         }
-        .frame(width: 580, height: 460)
+        .frame(width: Self.windowSize.width, height: Self.windowSize.height)
     }
+
+    static let windowSize = CGSize(width: 700, height: 500)
 
     private var slideTransition: AnyTransition {
         .asymmetric(
@@ -85,8 +87,8 @@ private struct WelcomeStep: View {
 
             OnboardingButton(title: "Get started", action: onNext)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 60)
+        .frame(maxWidth: 480, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 }
 
@@ -132,8 +134,8 @@ private struct ShortcutsStep: View {
 
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 60)
+        .frame(maxWidth: 480, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
         .onAppear {
             guard Self.alreadyInstalled else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -200,6 +202,8 @@ private struct AppearanceStep: View {
     var onNext: () -> Void
     @AppStorage(DefaultsKey.panelPosition) private var panelPositionRaw = PanelPosition.menu.rawValue
 
+    private var selected: PanelPosition { PanelPosition(rawValue: panelPositionRaw) ?? .menu }
+
     private struct Mode: Identifiable {
         let position: PanelPosition
         let title: String
@@ -208,30 +212,36 @@ private struct AppearanceStep: View {
     }
 
     private let modes: [Mode] = [
-        Mode(position: .menu, title: "Menu", subtitle: "A simple drop-down menu. The lightest option — no panel."),
-        Mode(position: .notch, title: "Notch", subtitle: "A panel that flows out from the display notch."),
-        Mode(position: .floating, title: "Floating", subtitle: "A compact panel you can drag anywhere on screen."),
+        Mode(position: .menu, title: "Menu", subtitle: "No panel, just a menu."),
+        Mode(position: .notch, title: "Notch", subtitle: "Flows from the notch."),
+        Mode(position: .floating, title: "Floating", subtitle: "Drag it anywhere."),
     ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("How should it appear?")
-                .font(.system(size: 44, weight: .bold))
+                .font(.system(size: 36, weight: .bold))
                 .foregroundStyle(.white)
-                .padding(.bottom, 16)
+                .padding(.bottom, 10)
 
-            Text("Choose how Mute opens when you click the\nmenu bar icon. You can change this in Settings.")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.white.opacity(0.62))
-                .lineSpacing(5)
-                .padding(.bottom, 28)
+            Text("Choose how Mute opens from the menu bar.\nYou can change this later in Settings.")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.white.opacity(0.58))
+                .lineSpacing(4)
+                .padding(.bottom, 26)
 
-            VStack(spacing: 8) {
-                ForEach(modes) { mode in
-                    modeRow(mode)
+            HStack(alignment: .top, spacing: 32) {
+                VStack(spacing: 8) {
+                    ForEach(modes) { mode in
+                        modeRow(mode)
+                    }
                 }
+                .frame(width: 220)
+
+                PreviewStage(mode: selected)
+                    .frame(maxWidth: .infinity)
             }
-            .padding(.bottom, 28)
+            .padding(.bottom, 26)
 
             OnboardingButton(title: "Continue", action: onNext)
         }
@@ -244,31 +254,149 @@ private struct AppearanceStep: View {
         return Button {
             withAnimation(.spring(response: 0.3)) { panelPositionRaw = mode.position.rawValue }
         } label: {
-            HStack(spacing: 14) {
+            HStack(spacing: 10) {
                 Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
-                    .font(.system(size: 18))
+                    .font(.system(size: 15))
                     .foregroundStyle(isSelected ? Color.muteBlue : .white.opacity(0.3))
                     .contentTransition(.symbolEffect(.replace))
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 1) {
                     Text(mode.title)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                     Text(mode.subtitle)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.42))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.4))
+                        .lineLimit(1)
                 }
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 11)
-            .background(Color.white.opacity(isSelected ? 0.08 : 0.04))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(Color.white.opacity(isSelected ? 0.08 : 0.03))
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .strokeBorder(isSelected ? Color.muteBlue.opacity(0.6) : .clear, lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Stylized mock of the menu bar and panel, standing in for a real screen
+/// recording until one is captured per mode.
+private struct PreviewStage: View {
+    let mode: PanelPosition
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.white.opacity(0.035))
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.08))
+
+            VStack(spacing: 0) {
+                menuBarMock
+                Spacer(minLength: 0)
+            }
+
+            mockContent
+        }
+        .frame(height: 234)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var menuBarMock: some View {
+        HStack(spacing: 9) {
+            Spacer()
+            ForEach(0..<2, id: \.self) { _ in
+                Circle().fill(Color.white.opacity(0.22)).frame(width: 6, height: 6)
+            }
+            Image(systemName: "moon.fill")
+                .font(.system(size: 8, weight: .semibold))
+                .foregroundStyle(mode == .menu ? .white : .white.opacity(0.5))
+                .frame(width: 15, height: 15)
+                .background(mode == .menu ? Color.muteBlue : Color.clear)
+                .clipShape(Circle())
+        }
+        .padding(.horizontal, 14)
+        .frame(height: 22)
+        .background(Color.black.opacity(0.35))
+    }
+
+    @ViewBuilder
+    private var mockContent: some View {
+        switch mode {
+        case .menu:
+            menuMock
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .padding(.top, 26)
+                .padding(.trailing, 18)
+        case .notch:
+            notchMock
+                .frame(maxWidth: .infinity, alignment: .top)
+        case .floating:
+            floatingMock
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        }
+    }
+
+    private var menuMock: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(0..<3, id: \.self) { row in
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(Color.white.opacity(row == 0 ? 0.6 : 0.3))
+                        .frame(width: 5, height: 5)
+                    Capsule()
+                        .fill(Color.white.opacity(row == 0 ? 0.6 : 0.3))
+                        .frame(width: row == 0 ? 60 : 44, height: 5)
+                }
+            }
+        }
+        .padding(12)
+        .frame(width: 130)
+        .background(Color.white.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.white.opacity(0.14)))
+        .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .top)))
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: mode)
+    }
+
+    private var notchMock: some View {
+        NotchPanelShape(topCornerRadius: 8, bottomCornerRadius: 14)
+            .fill(Color.white.opacity(0.1))
+            .overlay(
+                NotchPanelShape(topCornerRadius: 8, bottomCornerRadius: 14)
+                    .stroke(Color.white.opacity(0.14), lineWidth: 1)
+            )
+            .frame(width: 190, height: 92)
+            .overlay(
+                HStack(spacing: 6) {
+                    Capsule().fill(Color.muteBlue).frame(width: 34, height: 14)
+                    Capsule().fill(Color.white.opacity(0.18)).frame(width: 34, height: 14)
+                }
+                .padding(.top, 26)
+                , alignment: .top
+            )
+            .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .top)))
+            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: mode)
+    }
+
+    private var floatingMock: some View {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(Color.white.opacity(0.1))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.14)))
+            .frame(width: 150, height: 92)
+            .shadow(color: .black.opacity(0.4), radius: 14, y: 8)
+            .overlay(
+                HStack(spacing: 6) {
+                    Capsule().fill(Color.muteBlue).frame(width: 30, height: 12)
+                    Capsule().fill(Color.white.opacity(0.18)).frame(width: 30, height: 12)
+                }
+            )
+            .transition(.opacity.combined(with: .scale(scale: 0.92)))
+            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: mode)
     }
 }
 
@@ -324,8 +452,8 @@ private struct FinishStep: View {
                 onComplete()
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 60)
+        .frame(maxWidth: 480, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
         .onAppear { launchAtLogin = SMAppService.mainApp.status == .enabled }
     }
 }
