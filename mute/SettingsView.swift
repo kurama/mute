@@ -2,30 +2,15 @@ import SwiftUI
 import ServiceManagement
 import KeyboardShortcuts
 
-private enum SettingsTab: String, CaseIterable, Identifiable {
-    case general, triggers, focus, shortcuts, appearance
-    var id: String { rawValue }
-    var title: String {
-        switch self {
-        case .general: "General"
-        case .triggers: "Triggers"
-        case .focus: "Focus"
-        case .shortcuts: "Shortcuts"
-        case .appearance: "Appearance"
-        }
-    }
-}
-
 struct SettingsView: View {
     /// Fixed size of the settings window; shared with SettingsWindowController so
     /// the SwiftUI frame and the hosting NSWindow can't drift apart.
-    static let windowSize = CGSize(width: 580, height: 340)
+    static let windowSize = CGSize(width: 640, height: 600)
 
     let onTriggerModeChange: (TriggerMode) -> Void
     let onReplayOnboarding: () -> Void
     let onReinstallAutomation: (@escaping () -> Void) -> Void
 
-    @State private var tab: SettingsTab = .general
     @State private var mode: TriggerMode
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var automationMissing = false
@@ -53,133 +38,130 @@ struct SettingsView: View {
         ZStack {
             Color.muteBackground.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                tabBar
-                    .padding(.top, 22)
-                    .padding(.bottom, 22)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 34) {
+                    header
 
-                ZStack {
-                    switch tab {
-                    case .general: generalPane.transition(.opacity)
-                    case .triggers: triggerPane.transition(.opacity)
-                    case .focus: focusPane.transition(.opacity)
-                    case .shortcuts: shortcutPane.transition(.opacity)
-                    case .appearance: appearancePane.transition(.opacity)
-                    }
+                    section("General") { generalSection }
+                    section("Triggers") { triggerSection }
+                    section("Focus") { focusSection }
+                    section("Shortcuts") { shortcutSection }
+                    section("Appearance") { appearanceSection }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .padding(.horizontal, 40)
-                .animation(.easeInOut(duration: 0.18), value: tab)
+                .padding(40)
             }
         }
         .frame(width: Self.windowSize.width, height: Self.windowSize.height)
-    }
-
-    // MARK: - Tab bar
-
-    private var tabBar: some View {
-        HStack(spacing: 0) {
-            ForEach(Array(SettingsTab.allCases.enumerated()), id: \.element.id) { index, item in
-                if index > 0 { Spacer(minLength: 6) }
-                tabPill(item)
-            }
-        }
-        .padding(.horizontal, 40)
-    }
-
-    private func tabPill(_ item: SettingsTab) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.18)) { tab = item }
-        } label: {
-            Text(item.title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(tab == item ? .white : .white.opacity(0.45))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 7)
-                .background(tab == item ? Color.muteBlue : Color.white.opacity(0.06))
-                .clipShape(Capsule())
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Panes
-
-    private var generalPane: some View {
-        VStack(spacing: 10) {
-            if automationMissing {
-                warningCard(
-                    title: "Automation not set up",
-                    subtitle: "Mute can't toggle Do Not Disturb until the “Mute On/Off” shortcuts are installed.",
-                    action: isReinstallingAutomation ? "Installing…" : "Install",
-                    perform: {
-                        guard !isReinstallingAutomation else { return }
-                        isReinstallingAutomation = true
-                        onReinstallAutomation {
-                            isReinstallingAutomation = false
-                            SetupHealth.detectAutomationShortcuts { automationMissing = !$0 }
-                        }
-                    }
-                )
-            }
-            if cameraAccessDenied {
-                warningCard(
-                    title: "Camera access denied",
-                    subtitle: "Mute can't detect camera use. Grant access in System Settings.",
-                    action: "Open Settings",
-                    perform: SetupHealth.openCameraPrivacySettings
-                )
-            }
-            card {
-                row(title: "Launch at login", subtitle: "Start Mute automatically when you log in") {
-                    Toggle("", isOn: $launchAtLogin)
-                        .labelsHidden()
-                        .toggleStyle(.switch)
-                        .tint(Color.muteBlue)
-                        .onChange(of: launchAtLogin) { _, newValue in
-                            guard newValue != (SMAppService.mainApp.status == .enabled) else { return }
-                            do {
-                                if newValue {
-                                    try SMAppService.mainApp.register()
-                                } else {
-                                    try SMAppService.mainApp.unregister()
-                                }
-                            } catch {
-                                NSLog("Mute: launch at login toggle failed: \(error)")
-                            }
-                            launchAtLogin = SMAppService.mainApp.status == .enabled
-                        }
-                }
-            }
-            card {
-                row(title: "Sound feedback", subtitle: "Play a soft sound when Do Not Disturb turns on and off") {
-                    Toggle("", isOn: $soundFeedbackEnabled)
-                        .labelsHidden()
-                        .toggleStyle(.switch)
-                        .tint(Color.muteBlue)
-                }
-            }
-            card {
-                row(title: "Replay intro", subtitle: "Show the welcome screens again") {
-                    Button(action: onReplayOnboarding) {
-                        Text("Replay")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 7)
-                            .background(Color.white.opacity(0.1))
-                            .clipShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
         .onAppear {
             launchAtLogin = SMAppService.mainApp.status == .enabled
             SetupHealth.detectAutomationShortcuts { automationMissing = !$0 }
         }
     }
 
-    private var triggerPane: some View {
+    // MARK: - Header
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Settings")
+                .font(.system(size: 30, weight: .bold))
+                .foregroundStyle(.white)
+            Text("Mute stays quiet, quick to reach, and out of the way.")
+                .font(.system(size: 13))
+                .foregroundStyle(.white.opacity(0.4))
+        }
+    }
+
+    // MARK: - Section layout
+
+    private func section<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
+        HStack(alignment: .top, spacing: 24) {
+            Text(label.uppercased())
+                .font(.system(size: 11, weight: .semibold))
+                .kerning(0.6)
+                .foregroundStyle(.white.opacity(0.35))
+                .frame(width: 110, alignment: .leading)
+                .padding(.top, 2)
+
+            VStack(spacing: 10) {
+                content()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    // MARK: - Sections
+
+    @ViewBuilder
+    private var generalSection: some View {
+        if automationMissing {
+            warningCard(
+                title: "Automation not set up",
+                subtitle: "Mute can't toggle Do Not Disturb until the “Mute On/Off” shortcuts are installed.",
+                action: isReinstallingAutomation ? "Installing…" : "Install",
+                perform: {
+                    guard !isReinstallingAutomation else { return }
+                    isReinstallingAutomation = true
+                    onReinstallAutomation {
+                        isReinstallingAutomation = false
+                        SetupHealth.detectAutomationShortcuts { automationMissing = !$0 }
+                    }
+                }
+            )
+        }
+        if cameraAccessDenied {
+            warningCard(
+                title: "Camera access denied",
+                subtitle: "Mute can't detect camera use. Grant access in System Settings.",
+                action: "Open Settings",
+                perform: SetupHealth.openCameraPrivacySettings
+            )
+        }
+        card {
+            row(title: "Launch at login", subtitle: "Start Mute automatically when you log in") {
+                Toggle("", isOn: $launchAtLogin)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .tint(Color.muteBlue)
+                    .onChange(of: launchAtLogin) { _, newValue in
+                        guard newValue != (SMAppService.mainApp.status == .enabled) else { return }
+                        do {
+                            if newValue {
+                                try SMAppService.mainApp.register()
+                            } else {
+                                try SMAppService.mainApp.unregister()
+                            }
+                        } catch {
+                            NSLog("Mute: launch at login toggle failed: \(error)")
+                        }
+                        launchAtLogin = SMAppService.mainApp.status == .enabled
+                    }
+            }
+        }
+        card {
+            row(title: "Sound feedback", subtitle: "Play a soft sound when Do Not Disturb turns on and off") {
+                Toggle("", isOn: $soundFeedbackEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .tint(Color.muteBlue)
+            }
+        }
+        card {
+            row(title: "Replay intro", subtitle: "Show the welcome screens again") {
+                Button(action: onReplayOnboarding) {
+                    Text("Replay")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var triggerSection: some View {
         card {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Activate Do Not Disturb on")
@@ -195,7 +177,7 @@ struct SettingsView: View {
         }
     }
 
-    private var focusPane: some View {
+    private var focusSection: some View {
         card {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Default Focus duration")
@@ -229,55 +211,53 @@ struct SettingsView: View {
         }
     }
 
-    private var shortcutPane: some View {
-        VStack(spacing: 10) {
-            card {
-                row(title: "Show / hide the panel", subtitle: "Global keyboard shortcut") {
-                    KeyboardShortcuts.Recorder("", name: .togglePanel)
-                }
+    @ViewBuilder
+    private var shortcutSection: some View {
+        card {
+            row(title: "Show / hide the panel", subtitle: "Global keyboard shortcut") {
+                KeyboardShortcuts.Recorder("", name: .togglePanel)
             }
-            card {
-                row(title: "Turn Mute on / off", subtitle: "Turn mic & camera detection on or off") {
-                    KeyboardShortcuts.Recorder("", name: .toggleMonitoring)
-                }
+        }
+        card {
+            row(title: "Turn Mute on / off", subtitle: "Turn mic & camera detection on or off") {
+                KeyboardShortcuts.Recorder("", name: .toggleMonitoring)
             }
-            card {
-                row(title: "Start / end Focus", subtitle: "Uses your default Focus duration") {
-                    KeyboardShortcuts.Recorder("", name: .toggleFocus)
-                }
+        }
+        card {
+            row(title: "Start / end Focus", subtitle: "Uses your default Focus duration") {
+                KeyboardShortcuts.Recorder("", name: .toggleFocus)
             }
         }
     }
 
-    private var appearancePane: some View {
-        VStack(spacing: 10) {
-            card {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("When you click the menu bar icon")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.55))
-                    Text("Menu is the simplest — a plain menu, no panel. Use a floating panel if another app already lives in the notch.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.4))
-                        .fixedSize(horizontal: false, vertical: true)
-                    HStack(spacing: 8) {
-                        positionPill("Menu", .menu)
-                        positionPill("Notch", .notch)
-                        positionPill("Floating", .floating)
-                    }
+    @ViewBuilder
+    private var appearanceSection: some View {
+        card {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("When you click the menu bar icon")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.55))
+                Text("Menu is the simplest — a plain menu, no panel. Use a floating panel if another app already lives in the notch.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.4))
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 8) {
+                    positionPill("Menu", .menu)
+                    positionPill("Notch", .notch)
+                    positionPill("Floating", .floating)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            // The dismiss-on-outside-click behavior only applies to the panels.
-            if PanelPosition(rawValue: panelPositionRaw) != .menu {
-                card {
-                    row(title: "Dismiss when clicking outside",
-                        subtitle: "Hide the panel automatically when you click elsewhere") {
-                        Toggle("", isOn: $panelDismissOnOutsideClick)
-                            .labelsHidden()
-                            .toggleStyle(.switch)
-                            .tint(Color.muteBlue)
-                    }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        // The dismiss-on-outside-click behavior only applies to the panels.
+        if PanelPosition(rawValue: panelPositionRaw) != .menu {
+            card {
+                row(title: "Dismiss when clicking outside",
+                    subtitle: "Hide the panel automatically when you click elsewhere") {
+                    Toggle("", isOn: $panelDismissOnOutsideClick)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .tint(Color.muteBlue)
                 }
             }
         }
