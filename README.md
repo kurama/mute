@@ -12,7 +12,7 @@ No configuration required. Works with Zoom, Teams, Meet, FaceTime, and any other
 
 ## Install
 
-Requires macOS 26 or later.
+Requires macOS 14 Sonoma or later.
 
 ### Mac App Store
 
