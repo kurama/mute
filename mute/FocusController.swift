@@ -16,7 +16,7 @@ final class FocusController {
     func setup() {
         reconcileStaleState()
         guard !UserDefaults.standard.bool(forKey: Self.installedDefaultsKey) else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        Self.queue.asyncAfter(deadline: .now() + 1) {
             Self.installShortcuts()
         }
     }
@@ -33,20 +33,35 @@ final class FocusController {
 
     /// Re-run the shortcut import (opens the .shortcut files in the Shortcuts app),
     /// regardless of the installed flag — used by the settings health warning.
-    func reinstallShortcuts() {
-        Self.queue.async { Self.installShortcuts() }
+    /// `completion` is called on the main queue once both shortcuts have been
+    /// verified (or the user gave up), so the caller can refresh its warning state.
+    func reinstallShortcuts(completion: (() -> Void)? = nil) {
+        Self.queue.async {
+            Self.installShortcuts()
+            if let completion { DispatchQueue.main.async(execute: completion) }
+        }
     }
 
     private static func installShortcuts() {
+        let alreadyInstalled = SetupHealth.installedShortcutNames() ?? []
+        var allInstalled = true
         for name in ["Mute On", "Mute Off"] {
+            if alreadyInstalled.contains(name) { continue }
             guard let url = Bundle.main.url(forResource: name, withExtension: "shortcut") else {
                 log.debug("Missing bundle resource: \(name).shortcut")
+                allInstalled = false
                 continue
             }
             NSWorkspace.shared.open(url)
-            Thread.sleep(forTimeInterval: 1.2)
+            if !SetupHealth.waitForShortcutInstall(named: name) {
+                allInstalled = false
+            }
         }
-        UserDefaults.standard.set(true, forKey: installedDefaultsKey)
+        // Only mark installed once both are verified — an unconditional write here
+        // is what let a cancelled import silently pass as configured (issue #42).
+        if allInstalled {
+            UserDefaults.standard.set(true, forKey: installedDefaultsKey)
+        }
     }
 
     func handleMediaState(isActive: Bool) {

@@ -23,12 +23,13 @@ struct SettingsView: View {
 
     let onTriggerModeChange: (TriggerMode) -> Void
     let onReplayOnboarding: () -> Void
-    let onReinstallAutomation: () -> Void
+    let onReinstallAutomation: (@escaping () -> Void) -> Void
 
     @State private var tab: SettingsTab = .general
     @State private var mode: TriggerMode
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var automationMissing = false
+    @State private var isReinstallingAutomation = false
     @AppStorage(DefaultsKey.soundFeedbackEnabled) private var soundFeedbackEnabled = true
     @AppStorage(DefaultsKey.defaultFocusMinutes) private var defaultFocusMinutes = 30
     @AppStorage(DefaultsKey.panelDismissOnOutsideClick) private var panelDismissOnOutsideClick = true
@@ -38,7 +39,7 @@ struct SettingsView: View {
         initialTriggerMode: TriggerMode,
         onTriggerModeChange: @escaping (TriggerMode) -> Void,
         onReplayOnboarding: @escaping () -> Void,
-        onReinstallAutomation: @escaping () -> Void
+        onReinstallAutomation: @escaping (@escaping () -> Void) -> Void
     ) {
         self.onTriggerModeChange = onTriggerModeChange
         self.onReplayOnboarding = onReplayOnboarding
@@ -109,8 +110,15 @@ struct SettingsView: View {
                 warningCard(
                     title: "Automation not set up",
                     subtitle: "Mute can't toggle Do Not Disturb until the “Mute On/Off” shortcuts are installed.",
-                    action: "Install",
-                    perform: onReinstallAutomation
+                    action: isReinstallingAutomation ? "Installing…" : "Install",
+                    perform: {
+                        guard !isReinstallingAutomation else { return }
+                        isReinstallingAutomation = true
+                        onReinstallAutomation {
+                            isReinstallingAutomation = false
+                            SetupHealth.detectAutomationShortcuts { automationMissing = !$0 }
+                        }
+                    }
                 )
             }
             if cameraAccessDenied {

@@ -121,7 +121,7 @@ final class MuteApp: NSObject, NSApplicationDelegate {
             triggerMode: mediaMonitor?.triggerMode ?? .micAndCamera,
             onTriggerModeChange: { [weak self] mode in self?.mediaMonitor?.triggerMode = mode },
             onReplayOnboarding: { [weak self] in self?.replayOnboarding() },
-            onReinstallAutomation: { [weak self] in self?.focusController?.reinstallShortcuts() }
+            onReinstallAutomation: { [weak self] completion in self?.focusController?.reinstallShortcuts(completion: completion) }
         )
         settingsWindow?.present()
     }
