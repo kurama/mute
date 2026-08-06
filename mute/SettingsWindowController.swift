@@ -6,7 +6,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         triggerMode: TriggerMode,
         onTriggerModeChange: @escaping (TriggerMode) -> Void,
         onReplayOnboarding: @escaping () -> Void,
-        onReinstallAutomation: @escaping () -> Void
+        onReinstallAutomation: @escaping (@escaping () -> Void) -> Void
     ) -> SettingsWindowController {
         let view = SettingsView(
             initialTriggerMode: triggerMode,

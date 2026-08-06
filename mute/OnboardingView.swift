@@ -149,17 +149,25 @@ private struct ShortcutsStep: View {
         isInstalling = true
         Task {
             for name in ["Mute On", "Mute Off"] {
+                if name == "Mute On" && muteOnInstalled { continue }
+                if name == "Mute Off" && muteOffInstalled { continue }
                 guard let url = Bundle.main.url(forResource: name, withExtension: "shortcut") else { continue }
                 NSWorkspace.shared.open(url)
-                try? await Task.sleep(for: .seconds(2))
+                let installed = await waitForShortcut(named: name)
                 withAnimation(.spring(response: 0.3)) {
-                    if name == "Mute On" { muteOnInstalled = true }
-                    else { muteOffInstalled = true }
+                    if name == "Mute On" { muteOnInstalled = installed }
+                    else { muteOffInstalled = installed }
                 }
             }
             isInstalling = false
-            UserDefaults.standard.set(true, forKey: DefaultsKey.shortcutsInstalled)
+            if muteOnInstalled && muteOffInstalled {
+                UserDefaults.standard.set(true, forKey: DefaultsKey.shortcutsInstalled)
+            }
         }
+    }
+
+    private func waitForShortcut(named name: String) async -> Bool {
+        await Task.detached { SetupHealth.waitForShortcutInstall(named: name) }.value
     }
 }
 
