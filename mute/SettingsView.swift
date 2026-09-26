@@ -96,7 +96,7 @@ struct SettingsView: View {
         if automationMissing {
             warningCard(
                 title: "Automation not set up",
-                subtitle: "Mute can't toggle Do Not Disturb until the “Mute On/Off” shortcuts are installed.",
+                subtitle: "Mute can't safely manage Do Not Disturb until its Focus automation is installed.",
                 action: isReinstallingAutomation ? "Installing…" : "Install",
                 perform: {
                     guard !isReinstallingAutomation else { return }

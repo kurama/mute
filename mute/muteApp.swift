@@ -77,17 +77,24 @@ final class MuteApp: NSObject, NSApplicationDelegate {
 
         fc.setup()
 
-        mm.onStateChange = { [weak fc, weak sb] isActive in
+        fc.onStateChange = { [weak sb, weak vm] previousState, state in
+            vm?.updateAutomation(state)
+            sb?.updateState(isActive: state == .ownedByMute)
+            guard UserDefaults.standard.bool(forKey: DefaultsKey.soundFeedbackEnabled) else { return }
+            if state == .ownedByMute { SoundFeedback.playDndOn() }
+            else if state == .inactive && previousState == .ownedByMute { SoundFeedback.playDndOff() }
+        }
+
+        mm.onStateChange = { [weak fc] isActive in
             fc?.handleMediaState(isActive: isActive)
-            sb?.updateState(isActive: isActive)
-            if UserDefaults.standard.bool(forKey: DefaultsKey.soundFeedbackEnabled) {
-                isActive ? SoundFeedback.playDndOn() : SoundFeedback.playDndOff()
-            }
         }
         // Fires after every observable change (including each onStateChange), so the
         // panel view model is refreshed here rather than duplicated above.
-        mm.onStateRefresh = { [weak mm, weak vm] in
-            if let mm, let vm { vm.update(from: mm) }
+        mm.onStateRefresh = { [weak mm, weak vm, weak fc] in
+            if let mm, let vm {
+                vm.update(from: mm)
+                if let fc { vm.updateAutomation(fc.state) }
+            }
         }
 
         mm.start()

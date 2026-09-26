@@ -50,7 +50,17 @@ On first launch, Mute will guide you through a short onboarding that installs tw
 
 **Camera detection** uses `AVCaptureDevice.isInUseByAnotherApplication` via KVO, with a 2-second polling fallback.
 
-**Do Not Disturb** is toggled via two bundled macOS Shortcuts ("Mute On" / "Mute Off"), which call the native Focus API. This approach avoids private APIs and works without special entitlements.
+**Do Not Disturb** is managed through bundled macOS Shortcuts, which call the native Focus actions. This approach avoids private APIs and works without special entitlements.
+
+### Focus ownership
+
+Mute first checks whether any Focus is already active. If you started a call
+while using Do Not Disturb, Work, Sleep, or a custom Focus, Mute preserves it
+and does not change it when the call ends. It turns Do Not Disturb off only
+when Mute itself turned it on for that call.
+
+The Focus automation uses the built-in Do Not Disturb identifier rather than the
+translated name shown by macOS, so it works across system languages.
 
 ## Menu options
 

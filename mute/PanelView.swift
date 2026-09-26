@@ -127,7 +127,7 @@ struct PanelView: View {
             Text("Do Not Disturb")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
-            if viewModel.isActive || viewModel.isFocusing {
+            if viewModel.isFocusing || viewModel.automationState == .ownedByMute {
                 TimelineView(.periodic(from: .now, by: 1)) { _ in
                     HStack(spacing: 4) {
                         Circle()
@@ -139,13 +139,22 @@ struct PanelView: View {
                     }
                 }
             } else {
-                Text("Inactive")
+                Text(automationStatus)
                     .font(.system(size: 11))
                     .foregroundStyle(.white.opacity(0.35))
             }
         }
         // Read the title and its status line as one element instead of two fragments.
         .accessibilityElement(children: .combine)
+    }
+
+    private var automationStatus: String {
+        switch viewModel.automationState {
+        case .checking: return "Checking current Focus…"
+        case .preservedExistingFocus: return "Existing Focus preserved"
+        case .unavailable: return "Automation unavailable"
+        case .inactive, .ownedByMute: return "Inactive"
+        }
     }
 
     private var buttonsSection: some View {

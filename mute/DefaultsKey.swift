@@ -12,4 +12,5 @@ enum DefaultsKey {
     static let panelPosition = "panelPosition"
     static let panelFloatingOrigin = "panelFloatingOrigin"
     static let dndOwnedByApp = "dndOwnedByApp"
+    static let automationVersion = "automationVersion"
 }

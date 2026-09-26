@@ -20,7 +20,7 @@ enum SetupHealth {
         NSWorkspace.shared.open(url)
     }
 
-    /// Reports whether both "Mute On" and "Mute Off" exist in the user's Shortcuts
+    /// Reports whether the three default Focus shortcuts exist in the user's Shortcuts
     /// library. Errs on the side of "installed" if the check can't run, so a failed
     /// probe never shows a false warning. The completion is called on the main queue.
     static func detectAutomationShortcuts(_ completion: @escaping (Bool) -> Void) {
@@ -32,7 +32,11 @@ enum SetupHealth {
 
     private static func automationShortcutsInstalled() -> Bool {
         guard let names = installedShortcutNames() else { return true } // can't tell — don't nag
-        return names.contains("Mute On") && names.contains("Mute Off")
+        return [
+            FocusController.startShortcut,
+            FocusController.endShortcut,
+            FocusController.currentFocusShortcut,
+        ].allSatisfy(names.contains)
     }
 
     /// Blocks the calling thread — call only off the main thread. Polls `shortcuts

@@ -128,7 +128,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     private var statusLine: String {
         if viewModel.isFocusing { return "Focus · \(viewModel.focusRemaining)" }
-        if viewModel.isActive { return "Do Not Disturb · \(viewModel.dndDuration)" }
+        if viewModel.automationState == .ownedByMute { return "Do Not Disturb · \(viewModel.dndDuration)" }
+        if viewModel.automationState == .preservedExistingFocus { return "Existing Focus preserved" }
+        if viewModel.automationState == .checking { return "Checking current Focus…" }
+        if viewModel.automationState == .unavailable { return "Automation unavailable" }
         if !viewModel.isMonitoringEnabled { return "Mute disabled" }
         return "Do Not Disturb off"
     }
@@ -206,6 +209,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     @objc private func resetOnboarding() {
         UserDefaults.standard.removeObject(forKey: DefaultsKey.onboardingCompleted)
         UserDefaults.standard.removeObject(forKey: DefaultsKey.shortcutsInstalled)
+        UserDefaults.standard.removeObject(forKey: DefaultsKey.automationVersion)
     }
     #endif
 }

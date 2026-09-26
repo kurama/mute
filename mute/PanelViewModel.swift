@@ -9,6 +9,7 @@ final class PanelViewModel {
     var isActive = false
     var isMonitoringEnabled = true
     var isFocusing = false
+    var automationState: FocusAutomationState = .inactive
     var triggerMode: TriggerMode = .micAndCamera
     /// Notch height of the screen the panel is currently shown on. Updated on every
     /// open so the notch layout follows the display it lands on (which may differ
@@ -18,8 +19,6 @@ final class PanelViewModel {
     private(set) var focusEndsAt: Date?
 
     func update(from monitor: MediaMonitor) {
-        if monitor.isActive && !isActive { activeSince = Date() }
-        else if !monitor.isActive { activeSince = nil }
         isMicActive = monitor.isMicActive
         isCameraActive = monitor.isCameraActive
         isActive = monitor.isActive
@@ -27,6 +26,15 @@ final class PanelViewModel {
         isFocusing = monitor.isFocusing
         focusEndsAt = monitor.focusEndsAt
         triggerMode = monitor.triggerMode
+    }
+
+    func updateAutomation(_ state: FocusAutomationState) {
+        if state == .ownedByMute && automationState != .ownedByMute {
+            activeSince = Date()
+        } else if state != .ownedByMute {
+            activeSince = nil
+        }
+        automationState = state
     }
 
     var focusRemaining: String {

@@ -101,7 +101,7 @@ private struct ShortcutsStep: View {
     private var allInstalled: Bool { muteOnInstalled && muteOffInstalled }
 
     private static var alreadyInstalled: Bool {
-        UserDefaults.standard.bool(forKey: DefaultsKey.shortcutsInstalled)
+        UserDefaults.standard.integer(forKey: DefaultsKey.automationVersion) == FocusController.automationVersion
     }
 
     var body: some View {
@@ -111,15 +111,14 @@ private struct ShortcutsStep: View {
                 .foregroundStyle(.white)
                 .padding(.bottom, 18)
 
-            Text("Mute needs two shortcuts to control\nFocus mode on your Mac.")
+            Text("Mute needs three shortcuts to control\nFocus mode on your Mac.")
                 .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(.white.opacity(0.62))
                 .lineSpacing(5)
                 .padding(.bottom, 36)
 
             HStack(spacing: 14) {
-                ShortcutBadge(name: "Mute On", isInstalled: muteOnInstalled)
-                ShortcutBadge(name: "Mute Off", isInstalled: muteOffInstalled)
+                ShortcutBadge(name: "Focus automation", isInstalled: muteOnInstalled && muteOffInstalled)
             }
             .padding(.bottom, 44)
 
@@ -150,20 +149,27 @@ private struct ShortcutsStep: View {
     private func install() {
         isInstalling = true
         Task {
-            for name in ["Mute On", "Mute Off"] {
-                if name == "Mute On" && muteOnInstalled { continue }
-                if name == "Mute Off" && muteOffInstalled { continue }
-                guard let url = Bundle.main.url(forResource: name, withExtension: "shortcut") else { continue }
+            let existing = SetupHealth.installedShortcutNames() ?? []
+            for name in [FocusController.startShortcut, FocusController.endShortcut, FocusController.currentFocusShortcut] {
+                if existing.contains(name) { continue }
+                guard let url = FocusController.bundledShortcutURL(named: name) else { continue }
                 NSWorkspace.shared.open(url)
                 let installed = await waitForShortcut(named: name)
                 withAnimation(.spring(response: 0.3)) {
-                    if name == "Mute On" { muteOnInstalled = installed }
+                    if name == FocusController.startShortcut { muteOnInstalled = installed }
                     else { muteOffInstalled = installed }
                 }
+            }
+            let verified = SetupHealth.installedShortcutNames() ?? []
+            withAnimation(.spring(response: 0.3)) {
+                muteOnInstalled = verified.contains(FocusController.startShortcut)
+                muteOffInstalled = verified.contains(FocusController.endShortcut)
+                    && verified.contains(FocusController.currentFocusShortcut)
             }
             isInstalling = false
             if muteOnInstalled && muteOffInstalled {
                 UserDefaults.standard.set(true, forKey: DefaultsKey.shortcutsInstalled)
+                UserDefaults.standard.set(FocusController.automationVersion, forKey: DefaultsKey.automationVersion)
             }
         }
     }
